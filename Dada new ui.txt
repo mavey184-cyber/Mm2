@@ -1,0 +1,1243 @@
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Stats = game:GetService("Stats")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local DECAL_ASSET_ID = 121775193642723
+
+-------------------------------------------------
+-- ТЕМА И БИБЛИОТЕКА
+-------------------------------------------------
+local Theme = {
+    Background     = Color3.fromRGB(16, 16, 20),
+    Sidebar        = Color3.fromRGB(11, 11, 14),
+    Panel          = Color3.fromRGB(21, 21, 26),
+    PanelHeader    = Color3.fromRGB(26, 26, 32),
+    Stroke         = Color3.fromRGB(34, 34, 41),
+    NavActiveBg    = Color3.fromRGB(22, 22, 27),
+    Accent         = Color3.fromRGB(255, 255, 255),
+    CheckMark      = Color3.fromRGB(15, 15, 18),
+    TextPrimary    = Color3.fromRGB(232, 232, 237),
+    TextSecondary  = Color3.fromRGB(110, 110, 120),
+    TextTertiary   = Color3.fromRGB(75, 75, 85),
+    Font           = Enum.Font.GothamMedium,
+    FontBold       = Enum.Font.GothamBold,
+}
+
+local function Tween(obj, props, time)
+    local tw = TweenService:Create(obj, TweenInfo.new(time or 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
+    tw:Play()
+    return tw
+end
+
+local function Create(class, props, children)
+    local inst = Instance.new(class)
+    for k, v in pairs(props or {}) do inst[k] = v end
+    for _, c in ipairs(children or {}) do c.Parent = inst end
+    return inst
+end
+
+local function Corner(r) return Create("UICorner", { CornerRadius = UDim.new(0, r or 6) }) end
+local function Stroke(color, thickness) return Create("UIStroke", { Color = color or Theme.Stroke, Thickness = thickness or 1 }) end
+
+local function MakeDraggable(handle, frame)
+    local dragging, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+local function DrawIcon(kind, parent, color)
+    color = color or Theme.TextSecondary
+    local holder = Create("Frame", {
+        Size = UDim2.fromOffset(18, 18),
+        BackgroundTransparency = 1,
+        Parent = parent,
+    })
+
+    if kind == "target" then
+        Create("Frame", { Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, Parent = holder }, {
+            Stroke(color, 1.5)
+        })
+        Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = holder })
+        local inner = Create("Frame", {
+            Size = UDim2.fromOffset(6,6),
+            AnchorPoint = Vector2.new(0.5,0.5),
+            Position = UDim2.fromScale(0.5,0.5),
+            BackgroundColor3 = color,
+            Parent = holder,
+        })
+        Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = inner })
+    elseif kind == "eye" then
+        local outer = Create("Frame", {
+            Size = UDim2.fromOffset(18, 10),
+            Position = UDim2.fromOffset(0, 4),
+            BackgroundTransparency = 1,
+            Parent = holder,
+        }, { Stroke(color, 1.5), Create("UICorner", { CornerRadius = UDim.new(1,0) }) })
+        local pupil = Create("Frame", {
+            Size = UDim2.fromOffset(6,6),
+            AnchorPoint = Vector2.new(0.5,0.5),
+            Position = UDim2.fromScale(0.5,0.5),
+            BackgroundColor3 = color,
+            Parent = outer,
+        })
+        Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = pupil })
+    elseif kind == "users" then
+        for i, offsetX in ipairs({2, 9}) do
+            local head = Create("Frame", {
+                Size = UDim2.fromOffset(7,7),
+                Position = UDim2.fromOffset(offsetX, 1),
+                BackgroundColor3 = color,
+                BackgroundTransparency = i == 1 and 0 or 0.3,
+                Parent = holder,
+            })
+            Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = head })
+            local body = Create("Frame", {
+                Size = UDim2.fromOffset(9,7),
+                Position = UDim2.fromOffset(offsetX - 1, 9),
+                BackgroundColor3 = color,
+                BackgroundTransparency = i == 1 and 0 or 0.3,
+                Parent = holder,
+            })
+            Create("UICorner", { CornerRadius = UDim.new(0,3), Parent = body })
+        end
+    elseif kind == "globe" then
+        Create("Frame", { Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, Parent = holder }, { Stroke(color, 1.5), Create("UICorner", { CornerRadius = UDim.new(1,0) }) })
+        Create("Frame", { Size = UDim2.new(1,0,0,1), Position = UDim2.fromScale(0,0.5), BackgroundColor3 = color, BorderSizePixel = 0, Parent = holder })
+        Create("Frame", { Size = UDim2.new(0,1,1,0), Position = UDim2.fromScale(0.5,0), BackgroundColor3 = color, BorderSizePixel = 0, Parent = holder })
+    elseif kind == "user" then
+        local head = Create("Frame", { Size = UDim2.fromOffset(8,8), Position = UDim2.fromOffset(5,0), BackgroundColor3 = color, Parent = holder })
+        Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = head })
+        local body = Create("Frame", { Size = UDim2.fromOffset(14,8), Position = UDim2.fromOffset(2,10), BackgroundColor3 = color, Parent = holder })
+        Create("UICorner", { CornerRadius = UDim.new(0,5), Parent = body })
+    elseif kind == "palette" then
+        Create("Frame", { Size = UDim2.fromOffset(18,14), Position = UDim2.fromOffset(0,2), BackgroundTransparency = 1, Parent = holder }, { Stroke(color, 1.5), Create("UICorner", { CornerRadius = UDim.new(0,9) }) })
+        for _, p in ipairs({ {4,4}, {9,3}, {13,7} }) do
+            local dot = Create("Frame", { Size = UDim2.fromOffset(3,3), Position = UDim2.fromOffset(p[1], p[2]+2), BackgroundColor3 = color, Parent = holder })
+            Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = dot })
+        end
+    elseif kind == "save" then
+        Create("Frame", { Size = UDim2.fromOffset(16,16), Position = UDim2.fromOffset(1,1), BackgroundTransparency = 1, Parent = holder }, { Stroke(color, 1.5), Create("UICorner", { CornerRadius = UDim.new(0,3) }) })
+        Create("Frame", { Size = UDim2.fromOffset(8,6), Position = UDim2.fromOffset(5,2), BackgroundColor3 = color, Parent = holder })
+    elseif kind == "search" then
+        Create("Frame", {
+            Size = UDim2.fromOffset(11, 11),
+            Position = UDim2.fromOffset(1, 1),
+            BackgroundTransparency = 1,
+            Parent = holder,
+        }, { Stroke(color, 1.5), Create("UICorner", { CornerRadius = UDim.new(1,0) }) })
+        local handle = Create("Frame", {
+            Size = UDim2.fromOffset(6, 2),
+            Position = UDim2.fromOffset(10, 11),
+            Rotation = 45,
+            BackgroundColor3 = color,
+            Parent = holder,
+        })
+        Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = handle })
+    elseif kind == "dots" then
+        for i = 0, 2 do
+            local dot = Create("Frame", {
+                Size = UDim2.fromOffset(3, 3),
+                Position = UDim2.fromOffset(i * 6, 7),
+                BackgroundColor3 = color,
+                Parent = holder,
+            })
+            Create("UICorner", { CornerRadius = UDim.new(1,0), Parent = dot })
+        end
+    end
+
+    return holder
+end
+
+local SidebarUI = {}
+SidebarUI.__index = SidebarUI
+
+function SidebarUI:CreateWindow(config)
+    config = config or {}
+
+    local old = PlayerGui:FindFirstChild("SidebarUI_ScreenGui")
+    if old then old:Destroy() end
+
+    local ScreenGui = Create("ScreenGui", {
+        Name = "SidebarUI_ScreenGui",
+        ResetOnSpawn = false,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        Parent = (gethui and gethui()) or PlayerGui,
+    })
+
+    local Main = Create("Frame", {
+        Size = UDim2.fromOffset(460, 480),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = Theme.Background,
+        ClipsDescendants = true,
+        Parent = ScreenGui,
+    }, { Corner(14), Stroke(Theme.Stroke, 1) })
+
+    local Pattern = Create("Frame", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        ZIndex = 0,
+        Parent = Main,
+    })
+    
+    local PointDefs = {
+        [1] = {335, 70},  [2] = {421, 47},  [3] = {456, 117}, [4] = {386, 148},
+        [5] = {300, 172}, [6] = {343, 215}, [7] = {257, 257}, [8] = {222, 304},
+        [9] = {160, 320}, [10] = {191, 367}, [11] = {117, 367},
+    }
+    local Edges = {
+        {1,2},{2,3},{1,3},{1,4},{3,4},{4,5},{4,6},{5,6},
+        {6,7},{7,8},{8,9},{8,10},{9,10},{9,11},{10,11},{7,9},
+    }
+
+    local AnimPoints = {}
+    for k, v in pairs(PointDefs) do AnimPoints[k] = { x = v[1], y = v[2] } end
+
+    local LineFrames = {}
+    for _, e in ipairs(Edges) do
+        local line = Create("Frame", {
+            BackgroundColor3 = Theme.TextSecondary,
+            BackgroundTransparency = 0.82,
+            BorderSizePixel = 0,
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            ZIndex = 0,
+            Parent = Pattern,
+        })
+        table.insert(LineFrames, { frame = line, a = e[1], b = e[2] })
+    end
+
+    local NodeFrames = {}
+    for k in pairs(PointDefs) do
+        NodeFrames[k] = Create("Frame", {
+            Size = UDim2.fromOffset(5, 5),
+            BackgroundColor3 = Theme.TextSecondary,
+            BackgroundTransparency = 0.35,
+            BorderSizePixel = 0,
+            ZIndex = 0,
+            Parent = Pattern,
+        }, { Corner(3) })
+    end
+
+    local function UpdatePattern()
+        local t = tick()
+        for k, base in pairs(PointDefs) do
+            local phase = k * 1.7
+            AnimPoints[k].x = base[1] + math.sin(t * 0.5 + phase) * 6
+            AnimPoints[k].y = base[2] + math.cos(t * 0.4 + phase) * 6
+            local node = NodeFrames[k]
+            node.Position = UDim2.fromOffset(AnimPoints[k].x - 2.5, AnimPoints[k].y - 2.5)
+        end
+        for _, l in ipairs(LineFrames) do
+            local p1, p2 = AnimPoints[l.a], AnimPoints[l.b]
+            local dx, dy = p2.x - p1.x, p2.y - p1.y
+            local length = math.sqrt(dx * dx + dy * dy)
+            local angle = math.deg(math.atan2(dy, dx))
+            local midX, midY = (p1.x + p2.x) / 2, (p1.y + p2.y) / 2
+            l.frame.Size = UDim2.fromOffset(length, 1)
+            l.frame.Position = UDim2.fromOffset(midX, midY)
+            l.frame.Rotation = angle
+        end
+    end
+    UpdatePattern()
+    local PatternConn = RunService.Heartbeat:Connect(UpdatePattern)
+    ScreenGui.AncestryChanged:Connect(function(_, parent)
+        if not parent then PatternConn:Disconnect() end
+    end)
+
+    local DragHandle = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 22),
+        BackgroundTransparency = 1,
+        ZIndex = 2,
+        Parent = Main,
+    })
+    Create("Frame", {
+        Size = UDim2.fromOffset(36, 4),
+        Position = UDim2.new(0.5, -18, 0, 8),
+        BackgroundColor3 = Theme.Stroke,
+        Parent = DragHandle,
+    }, { Corner(2) })
+
+    MakeDraggable(DragHandle, Main)
+    MakeDraggable(Main, Main)
+
+    local SIDEBAR_WIDTH = 148
+    local Sidebar = Create("Frame", {
+        Size = UDim2.new(0, SIDEBAR_WIDTH, 1, 0),
+        BackgroundColor3 = Theme.Sidebar,
+        ZIndex = 1,
+        Parent = Main,
+    }, { Corner(14) })
+    Create("Frame", {
+        Size = UDim2.fromOffset(14, 14),
+        Position = UDim2.new(0, SIDEBAR_WIDTH - 14, 0, 0),
+        BackgroundColor3 = Theme.Sidebar,
+        BorderSizePixel = 0,
+        Parent = Sidebar,
+    })
+    Create("Frame", {
+        Size = UDim2.fromOffset(14, 14),
+        Position = UDim2.new(0, SIDEBAR_WIDTH - 14, 1, -14),
+        BackgroundColor3 = Theme.Sidebar,
+        BorderSizePixel = 0,
+        Parent = Sidebar,
+    })
+
+    local LogoHolder = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 92),
+        BackgroundTransparency = 1,
+        Parent = Sidebar,
+    })
+
+    -- ЗАМЕНА ЛОГОТИПА НА ФОТО
+    local LogoImage = Create("ImageLabel", {
+        Size = UDim2.fromOffset(70, 50),
+        Position = UDim2.new(0.5, -35, 0.5, -25),
+        BackgroundTransparency = 1,
+        ScaleType = Enum.ScaleType.Fit,
+        Image = "rbxassetid://" .. DECAL_ASSET_ID,
+        Parent = LogoHolder,
+    })
+
+    Create("Frame", {
+        Size = UDim2.new(1, -32, 0, 1),
+        Position = UDim2.new(0, 16, 1, -1),
+        BackgroundColor3 = Theme.Stroke,
+        BorderSizePixel = 0,
+        Parent = LogoHolder,
+    })
+
+    local FOOTER_HEIGHT = 52
+    local Footer = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, FOOTER_HEIGHT),
+        Position = UDim2.new(0, 0, 1, -FOOTER_HEIGHT),
+        BackgroundTransparency = 1,
+        Parent = Sidebar,
+    })
+    Create("Frame", {
+        Size = UDim2.new(1, -20, 0, 1),
+        Position = UDim2.fromOffset(10, 0),
+        BackgroundColor3 = Theme.Stroke,
+        BorderSizePixel = 0,
+        Parent = Footer,
+    })
+
+    local Avatar = Create("ImageLabel", {
+        Size = UDim2.fromOffset(30, 30),
+        Position = UDim2.fromOffset(10, 11),
+        BackgroundColor3 = Theme.PanelHeader,
+        ScaleType = Enum.ScaleType.Crop,
+        Image = "",
+        Parent = Footer,
+    }, { Corner(15) })
+
+    task.spawn(function()
+        local ok, content = pcall(function()
+            return Players:GetUserThumbnailAsync(
+                LocalPlayer.UserId,
+                Enum.ThumbnailType.HeadShot,
+                Enum.ThumbnailSize.Size100x100
+            )
+        end)
+        if ok and content then
+            Avatar.Image = content
+        end
+    end)
+
+    Create("TextLabel", {
+        Text = LocalPlayer.DisplayName,
+        Font = Theme.FontBold,
+        TextSize = 12,
+        TextColor3 = Theme.TextPrimary,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -52, 0, 14),
+        Position = UDim2.fromOffset(48, 9),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        Parent = Footer,
+    })
+    Create("TextLabel", {
+        Text = "@" .. LocalPlayer.Name,
+        Font = Theme.Font,
+        TextSize = 10,
+        TextColor3 = Theme.TextSecondary,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -52, 0, 12),
+        Position = UDim2.fromOffset(48, 25),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        Parent = Footer,
+    })
+
+    local NavHolder = Create("Frame", {
+        Size = UDim2.new(1, -16, 1, -(92 + FOOTER_HEIGHT + 8)),
+        Position = UDim2.fromOffset(8, 92),
+        BackgroundTransparency = 1,
+        Parent = Sidebar,
+    })
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 2),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = NavHolder,
+    })
+
+    local Content = Create("Frame", {
+        Size = UDim2.new(1, -SIDEBAR_WIDTH, 1, 0),
+        Position = UDim2.fromOffset(SIDEBAR_WIDTH, 0),
+        BackgroundTransparency = 1,
+        Parent = Main,
+    })
+
+    local ContentHeader = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 38),
+        BackgroundTransparency = 1,
+        Parent = Content,
+    })
+    local SearchBtn = Create("TextButton", {
+        Text = "",
+        Size = UDim2.fromOffset(28, 28),
+        Position = UDim2.new(1, -34, 0, 6),
+        BackgroundTransparency = 1,
+        AutoButtonColor = false,
+        Parent = ContentHeader,
+    })
+    local SearchIcon = DrawIcon("search", SearchBtn, Theme.TextSecondary)
+    SearchIcon.Position = UDim2.fromOffset(5, 5)
+
+    local Window = setmetatable({
+        ScreenGui = ScreenGui,
+        Main = Main,
+        NavHolder = NavHolder,
+        Content = Content,
+        NavItems = {},
+        _order = 0,
+    }, { __index = SidebarUI })
+
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            ScreenGui.Enabled = not ScreenGui.Enabled
+        end
+    end)
+
+    return Window
+end
+
+local function BuildNavRow(self, cfg, indent)
+    indent = indent or 0
+    self._order = self._order + 1
+
+    local rowHeight = cfg.SubTitle and cfg.SubTitle ~= "" and 38 or 28
+
+    local NavBtn = Create("TextButton", {
+        Text = "",
+        LayoutOrder = self._order,
+        Size = UDim2.new(1, 0, 0, rowHeight),
+        BackgroundColor3 = Theme.NavActiveBg,
+        BackgroundTransparency = 1,
+        AutoButtonColor = false,
+        ClipsDescendants = false,
+        Parent = self.NavHolder,
+    }, { Corner(7) })
+
+    local Glow = Create("ImageLabel", {
+        Image = "rbxassetid://5028857084",
+        ImageColor3 = Theme.Accent,
+        ImageTransparency = 1,
+        ScaleType = Enum.ScaleType.Stretch,
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.new(1, 46, 1, 46),
+        ZIndex = 0,
+        Parent = NavBtn,
+    })
+
+    local AccentBar = Create("Frame", {
+        Size = UDim2.fromOffset(3, rowHeight - 10),
+        Position = UDim2.fromOffset(0, 5),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 1,
+        Parent = NavBtn,
+    }, { Corner(2) })
+
+    local iconX = 9 + indent
+    local IconHolder
+    if cfg.Icon then
+        IconHolder = DrawIcon(cfg.Icon, NavBtn, Theme.TextSecondary)
+        IconHolder.Size = UDim2.fromOffset(15, 15)
+        IconHolder.Position = UDim2.fromOffset(iconX, (rowHeight - 15) / 2)
+    end
+
+    local textX = iconX + (cfg.Icon and 24 or 0)
+
+    local Title = Create("TextLabel", {
+        Text = cfg.Title or "Item",
+        Font = Theme.FontBold,
+        TextSize = 12,
+        TextColor3 = Theme.TextSecondary,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -textX - 18, 0, 14),
+        Position = UDim2.fromOffset(textX, cfg.SubTitle and cfg.SubTitle ~= "" and 5 or (rowHeight-14)/2),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = NavBtn,
+    })
+
+    local Sub
+    if cfg.SubTitle and cfg.SubTitle ~= "" then
+        Sub = Create("TextLabel", {
+            Text = cfg.SubTitle,
+            Font = Theme.Font,
+            TextSize = 9,
+            TextColor3 = Theme.TextTertiary,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -textX - 18, 0, 11),
+            Position = UDim2.fromOffset(textX, 19),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = NavBtn,
+        })
+    end
+
+    local Chevron
+    if cfg.Expandable then
+        Chevron = Create("TextLabel", {
+            Text = "⌄",
+            Font = Theme.FontBold,
+            TextSize = 11,
+            TextColor3 = Theme.TextSecondary,
+            BackgroundTransparency = 1,
+            Size = UDim2.fromOffset(16, 16),
+            Position = UDim2.new(1, -22, 0, (rowHeight-16)/2),
+            Parent = NavBtn,
+        })
+    end
+
+    return NavBtn, Title, IconHolder, AccentBar, Chevron, Glow
+end
+
+function SidebarUI:CreateNavItem(cfg)
+    cfg = cfg or {}
+    local NavBtn, Title, IconHolder, AccentBar, _, Glow = BuildNavRow(self, cfg, 0)
+
+    local PageScroll = Create("ScrollingFrame", {
+        Size = UDim2.new(1, -24, 1, -46),
+        Position = UDim2.fromOffset(12, 40),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 3,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        Visible = false,
+        Parent = self.Content,
+    })
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 10),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = PageScroll,
+    })
+
+    local NavObj = { Button = NavBtn, Title = Title, Icon = IconHolder, Accent = AccentBar, Glow = Glow, Page = PageScroll }
+    table.insert(self.NavItems, NavObj)
+    local index = #self.NavItems
+
+    local function select()
+        for _, item in ipairs(self.NavItems) do
+            item.Page.Visible = false
+            Tween(item.Button, { BackgroundTransparency = 1 }, 0.15)
+            Tween(item.Title, { TextColor3 = Theme.TextSecondary }, 0.15)
+            if item.Accent then Tween(item.Accent, { BackgroundTransparency = 1 }, 0.15) end
+            if item.Glow then Tween(item.Glow, { ImageTransparency = 1 }, 0.2) end
+        end
+        PageScroll.Visible = true
+        Tween(NavBtn, { BackgroundTransparency = 0 }, 0.15)
+        Tween(Title, { TextColor3 = Theme.TextPrimary }, 0.15)
+        Tween(AccentBar, { BackgroundTransparency = 0 }, 0.15)
+        if Glow then
+            Glow.ImageTransparency = 1
+            Tween(Glow, { ImageTransparency = 0.55 }, 0.35)
+        end
+    end
+
+    NavBtn.MouseButton1Click:Connect(select)
+    if index == 1 then select() end
+
+    local PageAPI = {}
+    local RowHolder
+
+    function PageAPI:CreatePanel(title, widthScale)
+        widthScale = widthScale or 0.62
+
+        if not RowHolder or #RowHolder:GetChildren() - 1 >= 2 then
+            RowHolder = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                Parent = PageScroll,
+            })
+            Create("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                Padding = UDim.new(0, 10),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = RowHolder,
+            })
+        end
+
+        local Panel = Create("Frame", {
+            Size = UDim2.new(widthScale, -5, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundColor3 = Theme.Panel,
+            Parent = RowHolder,
+        }, { Corner(8), Stroke() })
+
+        local Header = Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 32),
+            BackgroundColor3 = Theme.PanelHeader,
+            Parent = Panel,
+        }, { Corner(8) })
+        Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 8),
+            Position = UDim2.new(0, 0, 1, -8),
+            BackgroundColor3 = Theme.PanelHeader,
+            BorderSizePixel = 0,
+            Parent = Header,
+        })
+        Create("Frame", {
+            Size = UDim2.new(1, 0, 0, 1),
+            Position = UDim2.new(0, 0, 1, 0),
+            BackgroundColor3 = Theme.Stroke,
+            BorderSizePixel = 0,
+            Parent = Header,
+        })
+
+        Create("TextLabel", {
+            Text = title or "Category",
+            Font = Theme.FontBold,
+            TextSize = 12,
+            TextColor3 = Theme.TextPrimary,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -40, 1, 0),
+            Position = UDim2.fromOffset(12, 0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = Header,
+        })
+
+        local Arrow = Create("TextLabel", {
+            Text = "⌃",
+            Font = Theme.FontBold,
+            TextSize = 13,
+            TextColor3 = Theme.TextSecondary,
+            BackgroundTransparency = 1,
+            Size = UDim2.fromOffset(22, 22),
+            Position = UDim2.new(1, -28, 0, 5),
+            Parent = Header,
+        })
+
+        local Body = Create("Frame", {
+            Size = UDim2.new(1, -16, 0, 0),
+            Position = UDim2.fromOffset(8, 38),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Parent = Panel,
+        })
+        Create("UIListLayout", {
+            Padding = UDim.new(0, 2),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = Body,
+        })
+        Create("UIPadding", { PaddingBottom = UDim.new(0, 8), Parent = Body })
+
+        local collapsed = false
+        local Click = Create("TextButton", {
+            Text = "",
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            Parent = Header,
+        })
+        Click.MouseButton1Click:Connect(function()
+            collapsed = not collapsed
+            Body.Visible = not collapsed
+            Arrow.Text = collapsed and "⌄" or "⌃"
+        end)
+
+        local PanelAPI = {}
+
+        function PanelAPI:CreateCheckbox(cfg2)
+            cfg2 = cfg2 or {}
+            local state = cfg2.Default or false
+
+            local Row = Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 24),
+                BackgroundTransparency = 1,
+                Parent = Body,
+            })
+
+            local Box = Create("Frame", {
+                Size = UDim2.fromOffset(15, 15),
+                Position = UDim2.fromOffset(4, 4),
+                BackgroundColor3 = state and Theme.Accent or Theme.PanelHeader,
+                Parent = Row,
+            }, { Corner(4), Stroke() })
+
+            local Check = Create("TextLabel", {
+                Text = "✓",
+                Font = Theme.FontBold,
+                TextSize = 11,
+                TextColor3 = Theme.CheckMark,
+                BackgroundTransparency = 1,
+                Size = UDim2.fromScale(1, 1),
+                Visible = state,
+                Parent = Box,
+            })
+
+            Create("TextLabel", {
+                Text = cfg2.Text or "Option",
+                Font = Theme.Font,
+                TextSize = 12,
+                TextColor3 = Theme.TextPrimary,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, cfg2.Menu and -46 or -30, 1, 0),
+                Position = UDim2.fromOffset(27, 0),
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = Row,
+            })
+
+            if cfg2.Menu then
+                local MenuBtn = Create("TextButton", {
+                    Text = "",
+                    Size = UDim2.fromOffset(20, 20),
+                    Position = UDim2.new(1, -22, 0.5, -10),
+                    BackgroundTransparency = 1,
+                    AutoButtonColor = false,
+                    ZIndex = 2,
+                    Parent = Row,
+                })
+                local dots = DrawIcon("dots", MenuBtn, Theme.TextSecondary)
+                dots.Position = UDim2.fromOffset(2, 6)
+                MenuBtn.MouseButton1Click:Connect(function()
+                    if cfg2.OnMenu then task.spawn(cfg2.OnMenu) end
+                end)
+            end
+
+            local Btn = Create("TextButton", {
+                Text = "",
+                BackgroundTransparency = 1,
+                Size = UDim2.fromScale(1, 1),
+                Parent = Row,
+            })
+            Btn.MouseButton1Click:Connect(function()
+                state = not state
+                Box.BackgroundColor3 = state and Theme.Accent or Theme.PanelHeader
+                Check.Visible = state
+                if cfg2.Callback then task.spawn(cfg2.Callback, state) end
+            end)
+
+            return { Set = function(_, v) state = v end, Get = function() return state end }
+        end
+
+        function PanelAPI:CreateButton(cfg2)
+            cfg2 = cfg2 or {}
+
+            local Row = Create("TextButton", {
+                Text = "",
+                Size = UDim2.new(1, 0, 0, 26),
+                BackgroundColor3 = Theme.PanelHeader,
+                AutoButtonColor = false,
+                Parent = Body,
+            }, { Corner(5) })
+
+            Create("TextLabel", {
+                Text = cfg2.Text or "Button",
+                Font = Theme.FontBold,
+                TextSize = 12,
+                TextColor3 = Theme.TextPrimary,
+                BackgroundTransparency = 1,
+                Size = UDim2.fromScale(1, 1),
+                TextXAlignment = Enum.TextXAlignment.Center,
+                Parent = Row,
+            })
+
+            Row.MouseEnter:Connect(function() Tween(Row, { BackgroundColor3 = Theme.Accent }, 0.15) end)
+            Row.MouseLeave:Connect(function() Tween(Row, { BackgroundColor3 = Theme.PanelHeader }, 0.15) end)
+            Row.MouseButton1Click:Connect(function()
+                if cfg2.Callback then task.spawn(cfg2.Callback) end
+            end)
+
+            return Row
+        end
+
+        return PanelAPI
+    end
+
+    return PageAPI
+end
+
+function SidebarUI:CreateNavGroup(cfg)
+    cfg = cfg or {}
+    cfg.Expandable = true
+    local NavBtn, Title, IconHolder, AccentBar, Chevron, Glow = BuildNavRow(self, cfg, 0)
+
+    local SubHolder = Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundTransparency = 1,
+        LayoutOrder = self._order,
+        Visible = false,
+        Parent = self.NavHolder,
+    })
+    Create("UIListLayout", {
+        Padding = UDim.new(0, 2),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = SubHolder,
+    })
+
+    local expanded = false
+    local Click = Create("TextButton", {
+        Text = "",
+        BackgroundTransparency = 1,
+        Size = UDim2.fromScale(1, 1),
+        Parent = NavBtn,
+    })
+    Click.MouseButton1Click:Connect(function()
+        expanded = not expanded
+        SubHolder.Visible = expanded
+        Tween(Chevron, { Rotation = expanded and 180 or 0 }, 0.15)
+        if Glow then
+            Tween(Glow, { ImageTransparency = expanded and 0.6 or 1 }, 0.3)
+        end
+    end)
+
+    local GroupAPI = { SubHolder = SubHolder, self_ = self }
+
+    function GroupAPI:AddSubItem(subcfg)
+        subcfg = subcfg or {}
+        self.self_._order = self.self_._order + 1
+        local subOrder = self.self_._order
+
+        local SubBtn = Create("TextButton", {
+            Text = "",
+            LayoutOrder = subOrder,
+            Size = UDim2.new(1, 0, 0, 28),
+            BackgroundColor3 = Theme.NavActiveBg,
+            BackgroundTransparency = 1,
+            AutoButtonColor = false,
+            Parent = SubHolder,
+        }, { Corner(6) })
+
+        if subcfg.Icon then
+            local ic = DrawIcon(subcfg.Icon, SubBtn, Theme.TextTertiary)
+            ic.Size = UDim2.fromOffset(14,14)
+            ic.Position = UDim2.fromOffset(30, 7)
+        end
+
+        local SubTitle = Create("TextLabel", {
+            Text = subcfg.Title or "Item",
+            Font = Theme.Font,
+            TextSize = 12,
+            TextColor3 = Theme.TextSecondary,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -60, 1, 0),
+            Position = UDim2.fromOffset(subcfg.Icon and 52 or 30, 0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = SubBtn,
+        })
+
+        local PageScroll = Create("ScrollingFrame", {
+            Size = UDim2.new(1, -24, 1, -46),
+            Position = UDim2.fromOffset(12, 40),
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            ScrollBarThickness = 3,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            AutomaticCanvasSize = Enum.AutomaticSize.Y,
+            Visible = false,
+            Parent = self.self_.Content,
+        })
+        Create("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = PageScroll })
+
+        local NavObj = { Button = SubBtn, Title = SubTitle, Page = PageScroll }
+        table.insert(self.self_.NavItems, NavObj)
+
+        local function select()
+            for _, item in ipairs(self.self_.NavItems) do
+                item.Page.Visible = false
+                Tween(item.Button, { BackgroundTransparency = 1 }, 0.15)
+                Tween(item.Title, { TextColor3 = Theme.TextSecondary }, 0.15)
+                if item.Accent then Tween(item.Accent, { BackgroundTransparency = 1 }, 0.15) end
+            end
+            PageScroll.Visible = true
+            Tween(SubBtn, { BackgroundTransparency = 0.5 }, 0.15)
+            Tween(SubTitle, { TextColor3 = Theme.TextPrimary }, 0.15)
+        end
+        SubBtn.MouseButton1Click:Connect(select)
+
+        local RowHolder
+        local PageAPI = {}
+        function PageAPI:CreatePanel(title, widthScale)
+            widthScale = widthScale or 0.62
+            if not RowHolder or #RowHolder:GetChildren() - 1 >= 2 then
+                RowHolder = Create("Frame", {
+                    Size = UDim2.new(1, 0, 0, 0),
+                    AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundTransparency = 1,
+                    Parent = PageScroll,
+                })
+                Create("UIListLayout", {
+                    FillDirection = Enum.FillDirection.Horizontal,
+                    Padding = UDim.new(0, 10),
+                    SortOrder = Enum.SortOrder.LayoutOrder,
+                    Parent = RowHolder,
+                })
+            end
+            local Panel = Create("Frame", {
+                Size = UDim2.new(widthScale, -5, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundColor3 = Theme.Panel,
+                Parent = RowHolder,
+            }, { Corner(8), Stroke() })
+
+            local Header = Create("Frame", { Size = UDim2.new(1,0,0,32), BackgroundColor3 = Theme.PanelHeader, Parent = Panel }, { Corner(8) })
+            Create("Frame", { Size = UDim2.new(1,0,0,8), Position = UDim2.new(0,0,1,-8), BackgroundColor3 = Theme.PanelHeader, BorderSizePixel = 0, Parent = Header })
+            Create("Frame", { Size = UDim2.new(1,0,0,1), Position = UDim2.new(0,0,1,0), BackgroundColor3 = Theme.Stroke, BorderSizePixel = 0, Parent = Header })
+            Create("TextLabel", {
+                Text = title or "Category", Font = Theme.FontBold, TextSize = 12, TextColor3 = Theme.TextPrimary,
+                BackgroundTransparency = 1, Size = UDim2.new(1,-40,1,0), Position = UDim2.fromOffset(12,0),
+                TextXAlignment = Enum.TextXAlignment.Left, Parent = Header,
+            })
+
+            local Body = Create("Frame", {
+                Size = UDim2.new(1,-16,0,0), Position = UDim2.fromOffset(8,38),
+                AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = Panel,
+            })
+            Create("UIListLayout", { Padding = UDim.new(0,2), SortOrder = Enum.SortOrder.LayoutOrder, Parent = Body })
+            Create("UIPadding", { PaddingBottom = UDim.new(0,8), Parent = Body })
+
+            local PanelAPI = {}
+            function PanelAPI:CreateCheckbox(cfg2)
+                cfg2 = cfg2 or {}
+                local state = cfg2.Default or false
+                local Row = Create("Frame", { Size = UDim2.new(1,0,0,24), BackgroundTransparency = 1, Parent = Body })
+                local Box = Create("Frame", {
+                    Size = UDim2.fromOffset(15,15), Position = UDim2.fromOffset(4,4),
+                    BackgroundColor3 = state and Theme.Accent or Theme.PanelHeader, Parent = Row,
+                }, { Corner(4), Stroke() })
+                local Check = Create("TextLabel", {
+                    Text = "✓", Font = Theme.FontBold, TextSize = 11, TextColor3 = Theme.CheckMark,
+                    BackgroundTransparency = 1, Size = UDim2.fromScale(1,1), Visible = state, Parent = Box,
+                })
+                Create("TextLabel", {
+                    Text = cfg2.Text or "Option", Font = Theme.Font, TextSize = 12, TextColor3 = Theme.TextPrimary,
+                    BackgroundTransparency = 1, Size = UDim2.new(1, cfg2.Menu and -46 or -30, 1, 0), Position = UDim2.fromOffset(27,0),
+                    TextXAlignment = Enum.TextXAlignment.Left, Parent = Row,
+                })
+                if cfg2.Menu then
+                    local MenuBtn = Create("TextButton", {
+                        Text = "", Size = UDim2.fromOffset(20,20), Position = UDim2.new(1,-22,0.5,-10),
+                        BackgroundTransparency = 1, AutoButtonColor = false, ZIndex = 2, Parent = Row,
+                    })
+                    local dots = DrawIcon("dots", MenuBtn, Theme.TextSecondary)
+                    dots.Position = UDim2.fromOffset(2, 6)
+                    MenuBtn.MouseButton1Click:Connect(function()
+                        if cfg2.OnMenu then task.spawn(cfg2.OnMenu) end
+                    end)
+                end
+                local Btn = Create("TextButton", { Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1,1), Parent = Row })
+                Btn.MouseButton1Click:Connect(function()
+                    state = not state
+                    Box.BackgroundColor3 = state and Theme.Accent or Theme.PanelHeader
+                    Check.Visible = state
+                    if cfg2.Callback then task.spawn(cfg2.Callback, state) end
+                end)
+                return { Set = function(_, v) state = v end, Get = function() return state end }
+            end
+
+            function PanelAPI:CreateButton(cfg2)
+                cfg2 = cfg2 or {}
+                local Row = Create("TextButton", {
+                    Text = "", Size = UDim2.new(1, 0, 0, 26),
+                    BackgroundColor3 = Theme.PanelHeader, AutoButtonColor = false, Parent = Body,
+                }, { Corner(5) })
+                Create("TextLabel", {
+                    Text = cfg2.Text or "Button", Font = Theme.FontBold, TextSize = 12, TextColor3 = Theme.TextPrimary,
+                    BackgroundTransparency = 1, Size = UDim2.fromScale(1,1),
+                    TextXAlignment = Enum.TextXAlignment.Center, Parent = Row,
+                })
+                Row.MouseEnter:Connect(function() Tween(Row, { BackgroundColor3 = Theme.Accent }, 0.15) end)
+                Row.MouseLeave:Connect(function() Tween(Row, { BackgroundColor3 = Theme.PanelHeader }, 0.15) end)
+                Row.MouseButton1Click:Connect(function()
+                    if cfg2.Callback then task.spawn(cfg2.Callback) end
+                end)
+                return Row
+            end
+
+            return PanelAPI
+        end
+
+        return PageAPI
+    end
+
+    return GroupAPI
+end
+
+function SidebarUI:SelectNavItem(index)
+    local item = self.NavItems[index]
+    if item then
+        for _, i in ipairs(self.NavItems) do i.Page.Visible = false end
+        item.Page.Visible = true
+    end
+end
+
+-------------------------------------------------
+-- СОЗДАНИЕ МЕНЮ И НАПОЛНЕНИЕ
+-------------------------------------------------
+local Window = SidebarUI:CreateWindow()
+
+local Combat = Window:CreateNavItem({ Title = "Combat", SubTitle = "боевые настройки", Icon = "target" })
+local P1 = Combat:CreatePanel("Category A", 0.62)
+P1:CreateCheckbox({ Text = "Option 1", Default = true, Menu = true, Callback = function(v) print("Option 1:", v) end })
+P1:CreateCheckbox({ Text = "Option 2", Callback = function(v) print("Option 2:", v) end })
+
+local P2 = Combat:CreatePanel("Category B", 0.35)
+P2:CreateCheckbox({ Text = "Option 3", Callback = function(v) print("Option 3:", v) end })
+
+local P3 = Combat:CreatePanel("Category C", 0.62)
+P3:CreateCheckbox({ Text = "Option 4", Callback = function(v) print("Option 4:", v) end })
+P3:CreateButton({ Text = "Действие", Callback = function() print("Button pressed") end })
+
+local VisualsGroup = Window:CreateNavGroup({ Title = "Visuals", SubTitle = "показ доп. боксов", Icon = "eye" })
+local PlayersPage = VisualsGroup:AddSubItem({ Title = "Players", Icon = "users" })
+PlayersPage:CreatePanel("Player Settings", 1.0):CreateCheckbox({ Text = "Show names", Default = true })
+
+local WorldPage = VisualsGroup:AddSubItem({ Title = "World", Icon = "globe" })
+WorldPage:CreatePanel("World Settings", 1.0):CreateCheckbox({ Text = "Show markers" })
+
+Window:CreateNavItem({ Title = "Local", SubTitle = "настройки персонажа", Icon = "user" })
+Window:CreateNavItem({ Title = "Colors", SubTitle = "color settings", Icon = "palette" })
+Window:CreateNavItem({ Title = "Config", SubTitle = "menu settings", Icon = "save" })
+
+Window:SelectNavItem(1)
+
+-------------------------------------------------
+-- ВЕРХНИЕ ПЛАШКИ С ТАТУСАМИ И ИКОНКА-ПЕРЕКЛЮЧАТЕЛЬ
+-------------------------------------------------
+if PlayerGui:FindFirstChild("TopRightStatusGui") then
+	PlayerGui.TopRightStatusGui:Destroy()
+end
+
+local topGui = Instance.new("ScreenGui")
+topGui.Name = "TopRightStatusGui"
+topGui.ResetOnSpawn = false
+topGui.DisplayOrder = 999
+topGui.Parent = (gethui and gethui()) or PlayerGui
+
+local container = Instance.new("Frame")
+container.Name = "Container"
+container.Size = UDim2.new(0, 0, 0, 18)
+container.Position = UDim2.new(1, -10, 0, 2)
+container.AnchorPoint = Vector2.new(1, 0)
+container.BackgroundTransparency = 1
+container.Parent = topGui
+
+local containerLayout = Instance.new("UIListLayout")
+containerLayout.FillDirection = Enum.FillDirection.Horizontal
+containerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+containerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+containerLayout.Padding = UDim.new(0, 4)
+containerLayout.Parent = container
+
+local function applyPurpleGradient(instance)
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(130, 40, 205)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 160, 255))
+	})
+	gradient.Rotation = 0
+	gradient.Parent = instance
+end
+
+local function createBox(order, purpleText, whiteText, isSuffix)
+	local frame = Instance.new("Frame")
+	frame.LayoutOrder = order
+	frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	frame.BorderSizePixel = 0
+	frame.Size = UDim2.new(0, 0, 1, 0)
+	frame.AutomaticSize = Enum.AutomaticSize.X
+	frame.Parent = container
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 4)
+	corner.Parent = frame
+
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 5)
+	padding.PaddingRight = UDim.new(0, 5)
+	padding.Parent = frame
+
+	local innerLayout = Instance.new("UIListLayout")
+	innerLayout.FillDirection = Enum.FillDirection.Horizontal
+	innerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	innerLayout.Padding = UDim.new(0, 3)
+	innerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	innerLayout.Parent = frame
+
+	local label1 = Instance.new("TextLabel")
+	label1.Size = UDim2.new(0, 0, 1, 0)
+	label1.AutomaticSize = Enum.AutomaticSize.X
+	label1.BackgroundTransparency = 1
+	label1.TextSize = 10
+	label1.Font = Enum.Font.SourceSansBold
+	label1.Parent = frame
+
+	local label2 = Instance.new("TextLabel")
+	label2.Size = UDim2.new(0, 0, 1, 0)
+	label2.AutomaticSize = Enum.AutomaticSize.X
+	label2.BackgroundTransparency = 1
+	label2.TextSize = 10
+	label2.Font = Enum.Font.SourceSansBold
+	label2.Parent = frame
+
+	if not isSuffix then
+		label1.LayoutOrder = 1
+		label1.TextColor3 = Color3.fromRGB(255, 255, 255)
+		label1.Text = purpleText
+		applyPurpleGradient(label1)
+
+		label2.LayoutOrder = 2
+		label2.TextColor3 = Color3.fromRGB(255, 255, 255)
+		label2.Text = whiteText
+		return label2
+	else
+		label1.LayoutOrder = 1
+		label1.TextColor3 = Color3.fromRGB(255, 255, 255)
+		label1.Text = whiteText
+
+		label2.LayoutOrder = 2
+		label2.TextColor3 = Color3.fromRGB(255, 255, 255)
+		label2.Text = purpleText
+		applyPurpleGradient(label2)
+		return label1
+	end
+end
+
+createBox(1, "<>", "Dada", false)
+createBox(2, "D", LocalPlayer.Name, false)
+local fpsLabel = createBox(3, "Fps", "0", true)
+local pingLabel = createBox(4, "ms", "0", true)
+
+-- ПЕРЕТАСКИВАЕМАЯ ИКОНКА (ПЕРЕКЛЮЧАТЕЛЬ МЕНЮ)
+local imageButton = Instance.new("ImageButton")
+imageButton.Name = "DraggableIcon"
+imageButton.Size = UDim2.new(0, 120, 0, 60)
+imageButton.Position = UDim2.new(1, -130, 0.5, -30)
+imageButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+imageButton.BorderSizePixel = 0
+imageButton.BackgroundTransparency = 1
+imageButton.ScaleType = Enum.ScaleType.Fit
+imageButton.Parent = topGui
+
+local imgCorner = Instance.new("UICorner")
+imgCorner.CornerRadius = UDim.new(0, 8)
+imgCorner.Parent = imageButton
+
+task.spawn(function()
+	local finalImage = "rbxassetid://" .. DECAL_ASSET_ID
+
+	local success, info = pcall(function()
+		return MarketplaceService:GetProductInfo(DECAL_ASSET_ID, Enum.InfoType.Asset)
+	end)
+
+	if success and info and info.AssetTypeId == 13 then
+		finalImage = "rbxthumb://type=Asset&id=" .. DECAL_ASSET_ID .. "&w=420&h=420"
+	end
+
+	imageButton.Image = finalImage
+end)
+
+-- ДРАГ И КЛИК ДЛЯ ИКОНКИ
+local dragging = false
+local dragInput, dragStart, startPos
+local dragMoved = false
+
+imageButton.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragMoved = false
+		dragStart = input.Position
+		startPos = imageButton.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+imageButton.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		if delta.Magnitude > 3 then
+			dragMoved = true
+		end
+		imageButton.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+-- Переключение видимости меню при клике без перетаскивания
+imageButton.MouseButton1Click:Connect(function()
+	if not dragMoved then
+		Window.ScreenGui.Enabled = not Window.ScreenGui.Enabled
+	end
+end)
+
+-- ОБНОВЛЕНИЕ FPS И PING
+local frameCount = 0
+local lastUpdate = tick()
+
+RunService.RenderStepped:Connect(function()
+	frameCount = frameCount + 1
+	local currentTime = tick()
+	
+	if currentTime - lastUpdate >= 0.5 then
+		local fps = math.floor(frameCount / (currentTime - lastUpdate))
+		fpsLabel.Text = tostring(fps)
+		
+		local ping = 0
+		pcall(function()
+			ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+		end)
+		pingLabel.Text = tostring(ping)
+		
+		frameCount = 0
+		lastUpdate = currentTime
+	end
+end)
