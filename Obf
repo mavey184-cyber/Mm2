@@ -1,0 +1,1071 @@
+return(function(hnuGf, ...)
+local VglBHf = {"17Lqyk73v0";"iopn";"67SPFwGxci";"aMJLtQn9v9mfuM";"Pb1tonY5uyGqUE";"s9sClI";"8ThGsQBXG";"YzL2";"EUXAQxLXcUKjcfY";"4vWYoWEjUmIjyclxQ";"69NY";"fSr0wmxnae12xWHcM";"bOMJDvbZNCScYFJBC";"Cp1213uDe3b63Ld"}
+local 5JTI552e = function(...)
+--[[
+    DA-DA MM2 v8.8.3 + SidebarUI v2 (PACKED)
+]]
+
+local S = {}
+
+S.name = loadstring(base64decode("REEtREE="))()
+S.menu = loadstring(base64decode("RGFEYU1lbnVNTTI="))()
+
+local Players = game:GetService(loadstring(base64decode("UGxheWVycw=="))())
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService(loadstring(base64decode("V29ya3NwYWNl"))())
+local TweenService = game:GetService(loadstring(base64decode("VHdlZW5TZXJ2aWNl"))())
+local UIS = game:GetService(loadstring(base64decode("VXNlcklucHV0U2VydmljZQ=="))())
+local RunService = game:GetService(loadstring(base64decode("UnVuU2VydmljZQ=="))())
+local Camera = Workspace.CurrentCamera
+local Lighting = game:GetService(loadstring(base64decode("TGlnaHRpbmc="))())
+local RS = game:GetService(loadstring(base64decode("UmVwbGljYXRlZFN0b3JhZ2U="))())
+local PlayerGui = LocalPlayer:WaitForChild(loadstring(base64decode("UGxheWVyR3Vp"))())
+
+S.Players=Players S.LP=LocalPlayer S.WS=Workspace S.TS=TweenService S.UIS=UIS
+S.RS=RunService S.Cam=Camera S.Light=Lighting S.Replicated=RS S.PG=PlayerGui
+
+-- ==== PARENT ====
+S.getParent=function()
+    local p
+    pcall(function() if typeof(gethui)==loadstring(base64decode("ZnVuY3Rpb24="))() then p=gethui() end end)
+    return p or PlayerGui
+end
+
+pcall(function()
+    local old=game:GetService(loadstring(base64decode("Q29yZUd1aQ=="))()):FindFirstChild(loadstring(base64decode("U2lkZWJhclVJX0RhRGE="))())
+    if old then old:Destroy() end
+end)
+
+-- ==== STATE (все бывшие local) ====
+S.trailEnabled=false S.trailRainbow=false S.trailGradient=false
+S.trailColor=Color3.fromRGB(0,255,255)
+S.trailG1=Color3.fromRGB(0,86,255) S.trailG2=Color3.fromRGB(255,0,0)
+S.ffEnabled=false S.ffRainbow=false S.ffColor=Color3.fromRGB(128,128,128) S.ffOriginals={}
+S.skyboxEnabled=false S.currentSkybox=loadstring(base64decode("SEQ="))()
+S.timeEnabled=false S.timeValue=12 S.fullBright=false
+S.screenEnabled=false S.screenIntensity=0 S.screenConn=nil
+S.animeGui=nil
+S.espPlayers=false S.espGun=false S.tracer=false
+S.skin=loadstring(base64decode("Tm9uZQ=="))() S.activeSkin=nil
+S.cachedAwp=nil S.cachedTommy=nil S.cachedMinigun=nil
+
+S.auraEnabled={Angel=false,Wind=false,Starlight=false,Heavenly=false}
+S.AURA_COLOR=Color3.fromRGB(133,220,255)
+S.AURA_IDS={Angel=loadstring(base64decode("cmJ4YXNzZXRpZDovLzk3NjU4MTMwOTE3NTkz"))(),Wind=loadstring(base64decode("cmJ4YXNzZXRpZDovLzgwNjk0MDgxODUwODc3"))(),Starlight=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEzNDY0NTIxNjYxMzEwNw=="))(),Heavenly=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEzOTMwMDg5NzUyMDk2MQ=="))()}
+
+S.nebula=false
+S.autoVote=false S.targetMap=loadstring(base64decode("SG91c2UgMg=="))() S.TOTAL_TP=5
+S.MAP_LIST={loadstring(base64decode("Tm9uZQ=="))(),loadstring(base64decode("SG91c2UgMQ=="))(),loadstring(base64decode("SG91c2UgMg=="))(),loadstring(base64decode("TWFuc2lvbg=="))(),loadstring(base64decode("T2ZmaWNl"))(),loadstring(base64decode("RmFjdG9yeQ=="))(),loadstring(base64decode("Q2Fybml2YWw="))(),loadstring(base64decode("TWlsYmFzZQ=="))(),loadstring(base64decode("QmFuaw=="))(),loadstring(base64decode("SG9zcGl0YWw="))(),loadstring(base64decode("QmlvTGFi"))(),loadstring(base64decode("UmV0cmVhdA=="))(),loadstring(base64decode("VmlsbGE="))(),loadstring(base64decode("UG9sdXM="))(),loadstring(base64decode("QWxwaW5l"))(),loadstring(base64decode("SGlnaGxhbmQ="))(),loadstring(base64decode("U3Vid2F5"))(),loadstring(base64decode("UGlyYXRl"))(),loadstring(base64decode("T2FzaXM="))(),loadstring(base64decode("Q3J1aXNl"))()}
+S.roleColors={Murderer=Color3.fromRGB(255,0,0),Sheriff=Color3.fromRGB(0,0,255),Hero=Color3.fromRGB(255,255,0),Innocent=Color3.fromRGB(0,255,0),Default=Color3.fromRGB(200,200,200)}
+
+S.defaultLighting={Brightness=Lighting.Brightness,ClockTime=Lighting.ClockTime,GlobalShadows=Lighting.GlobalShadows,OutdoorAmbient=Lighting.OutdoorAmbient,Ambient=Lighting.Ambient,ColorShift_Top=Lighting.ColorShift_Top}
+
+S.WEAPON_SKINS={
+    AWP={asset=loadstring(base64decode("cmJ4YXNzZXRpZDovLzUxODE1MDczMjg="))(),scale=2,rotation=CFrame.Angles(math.rad(90),0,0),position=Vector3.new(0,2.5,0),name=loadstring(base64decode("QVdQX1Zpc3VhbE1vZGVs"))()},
+    [loadstring(base64decode("VG9tbXkgR3Vu"))()]={asset=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwNjQ4MzMwMjQ3"))(),scale=1,rotation=CFrame.Angles(math.rad(90),0,0),position=Vector3.new(0,0.5,0),name=loadstring(base64decode("VG9tbXlHdW5fVmlzdWFsTW9kZWw="))()},
+    Minigun={asset=loadstring(base64decode("cmJ4YXNzZXRpZDovLzY5NzAyMjUxNg=="))(),scale=1,rotation=CFrame.Angles(math.rad(90),math.rad(90),0),position=Vector3.new(0,0.5,0),name=loadstring(base64decode("TWluaWd1bl9WaXN1YWxNb2RlbA=="))()},
+}
+
+S.Skybox={
+    HD={Bk='http://www.roblox.com/asset/?id=16553658937',Dn='http://www.roblox.com/asset/?id=16553660713',Ft='http://www.roblox.com/asset/?id=16553662144',Lf='http://www.roblox.com/asset/?id=16553664042',Rt='http://www.roblox.com/asset/?id=16553665766',Up='http://www.roblox.com/asset/?id=16553667750'},
+    Snow={Bk='http://www.roblox.com/asset/?id=155657655',Dn='http://www.roblox.com/asset/?id=155674246',Ft='http://www.roblox.com/asset/?id=155657609',Lf='http://www.roblox.com/asset/?id=155657671',Rt='http://www.roblox.com/asset/?id=155657619',Up='http://www.roblox.com/asset/?id=155674931'},
+    BlueSpace={Bk='rbxassetid://15536110634',Dn='rbxassetid://15536112543',Ft='rbxassetid://15536116141',Lf='rbxassetid://15536114370',Rt='rbxassetid://15536118762',Up='rbxassetid://15536117282'},
+    Pink={Bk='rbxassetid://12216109205',Dn='rbxassetid://12216109875',Ft='rbxassetid://12216109489',Lf='rbxassetid://12216110170',Rt='rbxassetid://12216110471',Up='rbxassetid://12216108877'},
+    Sunset={Bk='rbxassetid://600830446',Dn='rbxassetid://600831635',Ft='rbxassetid://600832720',Lf='rbxassetid://600886090',Rt='rbxassetid://600833862',Up='rbxassetid://600835177'},
+    Galaxy={Bk='rbxassetid://15983968922',Dn='rbxassetid://15983966825',Ft='rbxassetid://15983965025',Lf='rbxassetid://15983967420',Rt='rbxassetid://15983966246',Up='rbxassetid://15983964246'},
+    Space={Bk='http://www.roblox.com/asset/?id=166509999',Dn='http://www.roblox.com/asset/?id=166510057',Ft='http://www.roblox.com/asset/?id=166510116',Lf='http://www.roblox.com/asset/?id=166510092',Rt='http://www.roblox.com/asset/?id=166510131',Up='http://www.roblox.com/asset/?id=166510114'},
+}
+
+S.flying=false S.highJump=false S.speedVal=50 S.speedHack=false S.jumpVal=80
+S.camLock=false S.knifeAim=false S.autoPistol=false S.tpKill=false S.noclip=false
+S.flyVel=nil S.flyGyro=nil
+S.jumpBoost=false S.jumpBoostPower=150 S.jumpBoostOnlyMove=false S.jumpBoostConn=nil
+S.BASE_PRED=0.15 S.MAX_ANGLE=67 S.KNIFE_PRED=0.15
+_G.GodAuraActive=false
+_G.WallshotEnabled=false
+
+-- ==== THEME ====
+S.Theme={
+    Background=Color3.fromRGB(13,15,22), Sidebar=Color3.fromRGB(9,11,17),
+    Panel=Color3.fromRGB(19,22,32), PanelHeader=Color3.fromRGB(24,28,41),
+    Stroke=Color3.fromRGB(42,47,66), NavActiveBg=Color3.fromRGB(25,29,43),
+    Accent=Color3.fromRGB(126,104,255), Accent2=Color3.fromRGB(77,182,255),
+    TextPrimary=Color3.fromRGB(241,243,250), TextSecondary=Color3.fromRGB(145,151,171),
+    TextTertiary=Color3.fromRGB(91,98,119),
+    Font=Enum.Font.GothamMedium, FontBold=Enum.Font.GothamBold,
+}
+local T = S.Theme
+
+-- ==== HELPERS ====
+S.Create=function(class,props,children)
+    local inst=Instance.new(class)
+    for JmLkAEph,v in pairs(props or {}) do inst[JmLkAEph]=v end
+    for _,c in ipairs(children or {}) do c.Parent=inst end
+    return inst
+end
+S.Corner=function(r) return S.Create(loadstring(base64decode("VUlDb3JuZXI="))(),{CornerRadius=UDim.new(0,r or 6)}) end
+S.Stroke=function(c,t) return S.Create(loadstring(base64decode("VUlTdHJva2U="))(),{Color=c or T.Stroke,Thickness=t or 1}) end
+
+S.Tween=function(obj,props,time)
+    local tw=TweenService:Create(obj,TweenInfo.new(time or 0.16,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),props)
+    tw:Play(); return tw
+end
+
+S.Drag=function(handle,frame)
+    local dragging,dragStart,startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            dragging=true; dragStart=input.Position; startPos=frame.Position
+            input.Changed:Connect(function() if input.UserInputState==Enum.UserInputState.End then dragging=false end end)
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+            local d=input.Position-dragStart
+            frame.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y)
+        end
+    end)
+end
+
+-- ==== GUI ====
+local ScreenGui=S.Create(loadstring(base64decode("U2NyZWVuR3Vp"))(),{
+    Name=loadstring(base64decode("U2lkZWJhclVJX0RhRGE="))(), ResetOnSpawn=false,
+    ZIndexBehavior=Enum.ZIndexBehavior.Sibling, Parent=S.getParent(),
+})
+
+local OpenBtn=S.Create(loadstring(base64decode("VGV4dEJ1dHRvbg=="))(),{
+    Size=UDim2.new(0,70,0,35), Position=UDim2.new(0,15,0.5,-17),
+    BackgroundColor3=Color3.fromRGB(15,15,20), BackgroundTransparency=0.4,
+    Text=S.name, TextColor3=Color3.fromRGB(255,255,255), TextSize=12,
+    Font=Enum.Font.GothamBold, BorderSizePixel=0, Active=true, Draggable=true, Parent=ScreenGui,
+},{S.Corner(6),S.Create(loadstring(base64decode("VUlTdHJva2U="))(),{Color=Color3.fromRGB(120,80,255),Thickness=1,Transparency=0.3})})
+
+S.FlyUp=S.Create(loadstring(base64decode("VGV4dEJ1dHRvbg=="))(),{
+    Size=UDim2.new(0,60,0,60), Position=UDim2.new(0.05,0,0.65,0),
+    BackgroundColor3=Color3.fromRGB(60,180,60), BackgroundTransparency=0.4,
+    Text=loadstring(base64decode("4pay"))(), TextColor3=Color3.fromRGB(255,255,255), TextSize=25,
+    Font=Enum.Font.GothamBold, BorderSizePixel=0, Visible=false, Parent=ScreenGui,
+},{S.Corner(999)})
+S.FlyDown=S.Create(loadstring(base64decode("VGV4dEJ1dHRvbg=="))(),{
+    Size=UDim2.new(0,60,0,60), Position=UDim2.new(0.05,0,0.78,0),
+    BackgroundColor3=Color3.fromRGB(180,60,60), BackgroundTransparency=0.4,
+    Text=loadstring(base64decode("4pa8"))(), TextColor3=Color3.fromRGB(255,255,255), TextSize=25,
+    Font=Enum.Font.GothamBold, BorderSizePixel=0, Visible=false, Parent=ScreenGui,
+},{S.Corner(999)})
+S.flyUpHeld=false S.flyDownHeld=false
+S.FlyUp.MouseButton1Down:Connect(function() S.flyUpHeld=true end)
+S.FlyUp.MouseButton1Up:Connect(function() S.flyUpHeld=false end)
+S.FlyUp.MouseLeave:Connect(function() S.flyUpHeld=false end)
+S.FlyDown.MouseButton1Down:Connect(function() S.flyDownHeld=true end)
+S.FlyDown.MouseButton1Up:Connect(function() S.flyDownHeld=false end)
+S.FlyDown.MouseLeave:Connect(function() S.flyDownHeld=false end)
+
+local Main=S.Create(loadstring(base64decode("RnJhbWU="))(),{
+    Size=UDim2.fromOffset(535,395), Position=UDim2.fromScale(0.5,0.5),
+    AnchorPoint=Vector2.new(0.5,0.5), BackgroundColor3=T.Background,
+    ClipsDescendants=true, Visible=false, Parent=ScreenGui,
+},{S.Corner(18),S.Stroke(T.Stroke,1)})
+S.Create(loadstring(base64decode("VUlHcmFkaWVudA=="))(),{
+    Rotation=135,
+    Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,T.Background),
+        ColorSequenceKeypoint.new(0.55,Color3.fromRGB(15,18,29)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(24,18,38)),
+    }), Parent=Main,
+})
+local DragHandle=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,22),BackgroundTransparency=1,ZIndex=2,Parent=Main})
+S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.fromOffset(58,4),Position=UDim2.new(0.5,-29,0,8),BackgroundColor3=T.Accent,BackgroundTransparency=0.15,Parent=DragHandle},{S.Corner(2)})
+S.Drag(DragHandle,Main)
+
+local SB_W=148
+local Sidebar=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(0,SB_W,1,0),BackgroundColor3=T.Sidebar,ZIndex=1,Parent=Main},{S.Corner(14)})
+S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.fromOffset(14,14),Position=UDim2.new(0,SB_W-14,0,0),BackgroundColor3=T.Sidebar,BorderSizePixel=0,Parent=Sidebar})
+S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.fromOffset(14,14),Position=UDim2.new(0,SB_W-14,1,-14),BackgroundColor3=T.Sidebar,BorderSizePixel=0,Parent=Sidebar})
+
+local Logo=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,96),BackgroundTransparency=1,Parent=Sidebar})
+S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=loadstring(base64decode("RGFkYQ=="))(),Font=Enum.Font.GothamBlack,TextSize=54,TextColor3=T.TextSecondary,TextTransparency=0.75,BackgroundTransparency=1,Size=UDim2.new(1,0,0,66),Position=UDim2.fromOffset(2,12),TextXAlignment=Enum.TextXAlignment.Center,Parent=Logo})
+S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=loadstring(base64decode("RGFkYQ=="))(),Font=Enum.Font.GothamBlack,TextSize=54,TextColor3=T.TextPrimary,BackgroundTransparency=1,Size=UDim2.new(1,0,0,66),Position=UDim2.fromOffset(0,10),TextXAlignment=Enum.TextXAlignment.Center,Parent=Logo})
+S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,-32,0,1),Position=UDim2.new(0,16,1,-1),BackgroundColor3=T.Stroke,BorderSizePixel=0,Parent=Logo})
+
+local F_H=52
+local Footer=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,F_H),Position=UDim2.new(0,0,1,-F_H),BackgroundTransparency=1,Parent=Sidebar})
+S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,-20,0,1),Position=UDim2.fromOffset(10,0),BackgroundColor3=T.Stroke,BorderSizePixel=0,Parent=Footer})
+local Avatar=S.Create(loadstring(base64decode("SW1hZ2VMYWJlbA=="))(),{Size=UDim2.fromOffset(30,30),Position=UDim2.fromOffset(10,11),BackgroundColor3=T.PanelHeader,Image=loadstring(base64decode(""))(),Parent=Footer},{S.Corner(15)})
+task.spawn(function()
+    local ok,content=pcall(function() return Players:GetUserThumbnailAsync(LocalPlayer.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size100x100) end)
+    if ok and content and Avatar.Parent then Avatar.Image=content end
+end)
+S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=LocalPlayer.DisplayName,Font=T.FontBold,TextSize=12,TextColor3=T.TextPrimary,BackgroundTransparency=1,Size=UDim2.new(1,-52,0,14),Position=UDim2.fromOffset(48,9),TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=Footer})
+S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=loadstring(base64decode("QA=="))()..LocalPlayer.Name,Font=T.Font,TextSize=10,TextColor3=T.TextSecondary,BackgroundTransparency=1,Size=UDim2.new(1,-52,0,12),Position=UDim2.fromOffset(48,25),TextXAlignment=Enum.TextXAlignment.Left,TextTruncate=Enum.TextTruncate.AtEnd,Parent=Footer})
+
+local Nav=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,-16,1,-(96+F_H+8)),Position=UDim2.fromOffset(9,96),BackgroundTransparency=1,Parent=Sidebar})
+S.Create(loadstring(base64decode("VUlMaXN0TGF5b3V0"))(),{Padding=UDim.new(0,2),SortOrder=Enum.SortOrder.LayoutOrder,Parent=Nav})
+
+local Content=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,-SB_W,1,0),Position=UDim2.fromOffset(SB_W,0),BackgroundTransparency=1,Parent=Main})
+S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,38),BackgroundTransparency=1,Parent=Content})
+
+-- ==== NAV ====
+S.NavItems={}
+S.navOrder=0
+S.CreateNav=function(cfg)
+    S.navOrder=S.navOrder+1
+    local rh = cfg.Sub and cfg.Sub~=loadstring(base64decode(""))() and 38 or 28
+    local Btn=S.Create(loadstring(base64decode("VGV4dEJ1dHRvbg=="))(),{
+        Text=loadstring(base64decode(""))(),LayoutOrder=S.navOrder,Size=UDim2.new(1,0,0,rh),
+        BackgroundColor3=T.NavActiveBg,BackgroundTransparency=1,AutoButtonColor=false,Parent=Nav,
+    },{S.Corner(7)})
+    local Glow=S.Create(loadstring(base64decode("SW1hZ2VMYWJlbA=="))(),{Image=loadstring(base64decode("cmJ4YXNzZXRpZDovLzUwMjg4NTcwODQ="))(),ImageColor3=T.Accent,ImageTransparency=1,ScaleType=Enum.ScaleType.Stretch,BackgroundTransparency=1,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.new(1,46,1,46),ZIndex=0,Parent=Btn})
+    local Bar=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.fromOffset(4,rh-10),Position=UDim2.fromOffset(2,5),BackgroundColor3=T.Accent,BackgroundTransparency=1,Parent=Btn},{S.Corner(2)})
+    local Title=S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=cfg.Title or loadstring(base64decode("SXRlbQ=="))(),Font=T.FontBold,TextSize=12,TextColor3=T.TextSecondary,BackgroundTransparency=1,Size=UDim2.new(1,-27,0,14),Position=UDim2.fromOffset(9,cfg.Sub and cfg.Sub~=loadstring(base64decode(""))() and 5 or (rh-14)/2),TextXAlignment=Enum.TextXAlignment.Left,Parent=Btn})
+    if cfg.Sub and cfg.Sub~=loadstring(base64decode(""))() then
+        S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=cfg.Sub,Font=T.Font,TextSize=9,TextColor3=T.TextTertiary,BackgroundTransparency=1,Size=UDim2.new(1,-27,0,11),Position=UDim2.fromOffset(9,19),TextXAlignment=Enum.TextXAlignment.Left,Parent=Btn})
+    end
+    local Page=S.Create(loadstring(base64decode("U2Nyb2xsaW5nRnJhbWU="))(),{
+        Size=UDim2.new(1,-24,1,-46),Position=UDim2.fromOffset(12,40),
+        BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,
+        CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,
+        Visible=false,Parent=Content,
+    })
+    S.Create(loadstring(base64decode("VUlMaXN0TGF5b3V0"))(),{Padding=UDim.new(0,10),SortOrder=Enum.SortOrder.LayoutOrder,Parent=Page})
+    local obj={Btn=Btn,Title=Title,Bar=Bar,Glow=Glow,Page=Page}
+    table.insert(S.NavItems,obj)
+    local function select()
+        for _,it in ipairs(S.NavItems) do
+            it.Page.Visible=false
+            S.Tween(it.Btn,{BackgroundTransparency=1},0.15)
+            S.Tween(it.Title,{TextColor3=T.TextSecondary},0.15)
+            S.Tween(it.Bar,{BackgroundTransparency=1},0.15)
+            S.Tween(it.Glow,{ImageTransparency=1},0.2)
+        end
+        Page.Visible=true
+        S.Tween(Btn,{BackgroundTransparency=0},0.15)
+        S.Tween(Title,{TextColor3=T.TextPrimary},0.15)
+        S.Tween(Bar,{BackgroundTransparency=0},0.15)
+        Glow.ImageTransparency=1; S.Tween(Glow,{ImageTransparency=0.55},0.35)
+    end
+    Btn.MouseButton1Click:Connect(select)
+    if #S.NavItems==1 then select() end
+    return Page
+end
+
+-- ==== UI WIDGETS ====
+S.AddToggle=function(page,text,desc,def,cb)
+    local state=def or false
+    local f=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,55),BackgroundColor3=Color3.fromRGB(28,28,35),BackgroundTransparency=0.4,BorderSizePixel=0,Parent=page},{S.Corner(6),S.Stroke(Color3.fromRGB(45,45,55),1)})
+    S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=text,Font=T.FontBold,TextSize=12,TextColor3=Color3.fromRGB(230,230,240),BackgroundTransparency=1,Size=UDim2.new(1,-70,0,20),Position=UDim2.fromOffset(12,8),TextXAlignment=Enum.TextXAlignment.Left,Parent=f})
+    if desc and desc~=loadstring(base64decode(""))() then
+        S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=desc,Font=T.Font,TextSize=10,TextColor3=Color3.fromRGB(140,140,150),BackgroundTransparency=1,Size=UDim2.new(1,-70,0,18),Position=UDim2.fromOffset(12,28),TextXAlignment=Enum.TextXAlignment.Left,Parent=f})
+    end
+    local Sw=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.fromOffset(36,18),Position=UDim2.new(1,-48,0.5,-9),BackgroundColor3=state and Color3.fromRGB(120,80,255) or Color3.fromRGB(45,45,55),BorderSizePixel=0,Parent=f},{S.Corner(999)})
+    local Kn=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.fromOffset(14,14),Position=state and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7),BackgroundColor3=state and Color3.fromRGB(255,255,255) or Color3.fromRGB(180,180,190),BorderSizePixel=0,Parent=Sw},{S.Corner(999)})
+    local B=S.Create(loadstring(base64decode("VGV4dEJ1dHRvbg=="))(),{Text=loadstring(base64decode(""))(),BackgroundTransparency=1,Size=UDim2.fromScale(1,1),Parent=f})
+    B.MouseButton1Click:Connect(function()
+        state=not state
+        if state then
+            TweenService:Create(Sw,TweenInfo.new(0.2),{BackgroundColor3=Color3.fromRGB(120,80,255)}):Play()
+            TweenService:Create(Kn,TweenInfo.new(0.2),{Position=UDim2.new(1,-16,0.5,-7),BackgroundColor3=Color3.fromRGB(255,255,255)}):Play()
+        else
+            TweenService:Create(Sw,TweenInfo.new(0.2),{BackgroundColor3=Color3.fromRGB(45,45,55)}):Play()
+            TweenService:Create(Kn,TweenInfo.new(0.2),{Position=UDim2.new(0,2,0.5,-7),BackgroundColor3=Color3.fromRGB(180,180,190)}):Play()
+        end
+        pcall(cb,state)
+    end)
+end
+
+S.AddSlider=function(page,text,desc,minV,maxV,defV,cb)
+    local f=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,70),BackgroundColor3=Color3.fromRGB(28,28,35),BackgroundTransparency=0.4,BorderSizePixel=0,Parent=page},{S.Corner(6),S.Stroke(Color3.fromRGB(45,45,55),1)})
+    S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=text,Font=T.FontBold,TextSize=12,TextColor3=Color3.fromRGB(230,230,240),BackgroundTransparency=1,Size=UDim2.new(1,-70,0,20),Position=UDim2.fromOffset(12,8),TextXAlignment=Enum.TextXAlignment.Left,Parent=f})
+    if desc and desc~=loadstring(base64decode(""))() then
+        S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=desc,Font=T.Font,TextSize=10,TextColor3=Color3.fromRGB(140,140,150),BackgroundTransparency=1,Size=UDim2.new(1,-70,0,18),Position=UDim2.fromOffset(12,28),TextXAlignment=Enum.TextXAlignment.Left,Parent=f})
+    end
+    local VL=S.Create(loadstring(base64decode("VGV4dExhYmVs"))(),{Text=tostring(defV),Font=T.FontBold,TextSize=12,TextColor3=Color3.fromRGB(230,230,240),BackgroundTransparency=1,Size=UDim2.fromOffset(40,20),Position=UDim2.new(1,-50,0,8),Parent=f})
+    local Track=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,-24,0,4),Position=UDim2.new(0,12,0,55),BackgroundColor3=Color3.fromRGB(45,45,55),BorderSizePixel=0,Parent=f},{S.Corner(999)})
+    local pct=(defV-minV)/(maxV-minV)
+    local Fill=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(pct,0,1,0),BackgroundColor3=Color3.fromRGB(120,80,255),BorderSizePixel=0,Parent=Track},{S.Corner(999)})
+    local H=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.fromOffset(14,14),Position=UDim2.new(pct,-7,0.5,-7),BackgroundColor3=Color3.fromRGB(255,255,255),BorderSizePixel=0,Parent=Track},{S.Corner(999)})
+    local dr=false
+    H.InputBegan:Connect(function(inp) if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then dr=true end end)
+    H.InputEnded:Connect(function(inp) if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then dr=false end end)
+    UIS.InputChanged:Connect(function(inp)
+        if dr and (inp.UserInputType==Enum.UserInputType.MouseMovement or inp.UserInputType==Enum.UserInputType.Touch) then
+            local p=math.clamp((inp.Position.X-Track.AbsolutePosition.X)/Track.AbsoluteSize.X,0,1)
+            local v=math.floor(minV+(maxV-minV)*p)
+            H.Position=UDim2.new(p,-7,0.5,-7); Fill.Size=UDim2.new(p,0,1,0); VL.Text=tostring(v)
+            pcall(cb,v)
+        end
+    end)
+end
+
+S.AddButton=function(page,text,cb)
+    local B=S.Create(loadstring(base64decode("VGV4dEJ1dHRvbg=="))(),{Size=UDim2.new(1,0,0,38),BackgroundColor3=Color3.fromRGB(35,35,42),BackgroundTransparency=0.2,Text=text,TextColor3=Color3.fromRGB(230,230,240),TextSize=12,Font=T.FontBold,BorderSizePixel=0,AutoButtonColor=false,Parent=page},{S.Corner(6),S.Stroke(Color3.fromRGB(45,45,55),1)})
+    B.MouseEnter:Connect(function() TweenService:Create(B,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(120,80,255),BackgroundTransparency=0.2}):Play() end)
+    B.MouseLeave:Connect(function() TweenService:Create(B,TweenInfo.new(0.15),{BackgroundColor3=Color3.fromRGB(35,35,42),BackgroundTransparency=0.2}):Play() end)
+    B.MouseButton1Click:Connect(function() pcall(cb) end)
+    return B
+end
+
+S.AddDropdown=function(page,text,options,cb)
+    local f=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,38),BackgroundColor3=Color3.fromRGB(28,28,35),BackgroundTransparency=0.4,BorderSizePixel=0,Parent=page},{S.Corner(6)})
+    local idx=1
+    local B=S.Create(loadstring(base64decode("VGV4dEJ1dHRvbg=="))(),{Size=UDim2.fromScale(1,1),BackgroundTransparency=1,Text=text..loadstring(base64decode("OiA="))()..options[1],TextColor3=Color3.fromRGB(230,230,240),TextSize=12,Font=T.FontBold,Parent=f})
+    B.MouseButton1Click:Connect(function()
+        idx = idx>=#options and 1 or idx+1
+        B.Text=text..loadstring(base64decode("OiA="))()..options[idx]
+        pcall(cb,options[idx])
+    end)
+    return B
+end
+
+S.AddText=function(page,ph,cb)
+    local f=S.Create(loadstring(base64decode("RnJhbWU="))(),{Size=UDim2.new(1,0,0,42),BackgroundColor3=Color3.fromRGB(28,28,35),BackgroundTransparency=0.4,BorderSizePixel=0,Parent=page},{S.Corner(6),S.Stroke(Color3.fromRGB(45,45,55),1)})
+    local tb=S.Create(loadstring(base64decode("VGV4dEJveA=="))(),{Size=UDim2.new(1,-24,1,-12),Position=UDim2.fromOffset(12,6),BackgroundTransparency=1,PlaceholderText=ph,PlaceholderColor3=Color3.fromRGB(120,120,130),Text=loadstring(base64decode(""))(),TextColor3=Color3.fromRGB(230,230,240),TextSize=12,Font=T.Font,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=f})
+    return tb
+end
+
+-- ==== LOGIC FUNCTIONS ====
+
+S.removeAura=function(n)
+    local c=LocalPlayer.Character; if not c then return end
+    local tag=loadstring(base64decode("RGFEYUF1cmFf"))()..n
+    for _,o in ipairs(c:GetDescendants()) do if o.Name==tag then o:Destroy() end end
+end
+S.applyAura=function(n)
+    S.removeAura(n); if not S.auraEnabled[n] then return end
+    local id=S.AURA_IDS[n]; if not id then return end
+    local c=LocalPlayer.Character; if not c then return end
+    local ok,a=pcall(function() return game:GetObjects(id)[1] end); if not ok or not a then return end
+    local parts={}; for _,p in ipairs(c:GetChildren()) do if p:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) then parts[p.Name]=p end end
+    for _,ap in ipairs(a:GetChildren()) do
+        local tgt=parts[ap.Name]
+        if tgt then
+            for _,e in ipairs(ap:GetChildren()) do
+                local cl=e:Clone(); cl.Name=loadstring(base64decode("RGFEYUF1cmFf"))()..n; cl.Parent=tgt
+                for _,o in ipairs(cl:GetDescendants()) do
+                    if o:IsA(loadstring(base64decode("UGFydGljbGVFbWl0dGVy"))()) or o:IsA(loadstring(base64decode("QmVhbQ=="))()) or o:IsA(loadstring(base64decode("VHJhaWw="))()) then o.Color=ColorSequence.new(S.AURA_COLOR); o.Enabled=true
+                    elseif o:IsA(loadstring(base64decode("UG9pbnRMaWdodA=="))()) then o.Color=S.AURA_COLOR end
+                end
+            end
+        end
+    end
+    a:Destroy()
+end
+S.auraToggle=function(n,st)
+    S.auraEnabled[n]=st
+    local c=LocalPlayer.Character
+    if st then
+        if c then task.spawn(function() c:WaitForChild(loadstring(base64decode("SHVtYW5vaWQ="))(),5); task.wait(0.2); S.applyAura(n) end) end
+    else S.removeAura(n) end
+end
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    for n,st in pairs(S.auraEnabled) do if st then S.applyAura(n) end end
+end)
+
+S.applyNebula=function()
+    if not S.nebula then return end
+    local o=Lighting:FindFirstChild(loadstring(base64decode("RGFEYU5lYnVsYUZY"))()); if o then o:Destroy() end
+    local fx=Instance.new(loadstring(base64decode("Q29sb3JDb3JyZWN0aW9uRWZmZWN0"))()); fx.Name=loadstring(base64decode("RGFEYU5lYnVsYUZY"))()
+    fx.Brightness=-0.25; fx.Contrast=0.4; fx.Saturation=-0.5
+    fx.TintColor=Color3.fromRGB(97,65,100); fx.Parent=Lighting
+    Lighting.Ambient=Color3.fromRGB(97,65,100); Lighting.OutdoorAmbient=Color3.fromRGB(97,65,100); Lighting.ColorShift_Top=Color3.fromRGB(97,65,100)
+end
+S.removeNebula=function()
+    local fx=Lighting:FindFirstChild(loadstring(base64decode("RGFEYU5lYnVsYUZY"))()); if fx then fx:Destroy() end
+    Lighting.Ambient=S.defaultLighting.Ambient; Lighting.OutdoorAmbient=S.defaultLighting.OutdoorAmbient; Lighting.ColorShift_Top=S.defaultLighting.ColorShift_Top
+end
+S.nebulaToggle=function(st) S.nebula=st; if st then S.applyNebula() else S.removeNebula() end end
+
+-- AUTO VOTE
+S.avGetMap=function(pad)
+    local ok,r=pcall(function()
+        local vg=pad:FindFirstChild(loadstring(base64decode("Vm90ZUluZm9HdWk="))(),true); if not vg then return nil end
+        local c=vg:FindFirstChild(loadstring(base64decode("Q29udGFpbmVy"))(),true); if not c then return nil end
+        local m=c:FindFirstChild(loadstring(base64decode("TWFwTmFtZQ=="))(),true); if not m then return nil end
+        if m:IsA(loadstring(base64decode("VGV4dExhYmVs"))()) or m:IsA(loadstring(base64decode("VGV4dEJ1dHRvbg=="))()) or m:IsA(loadstring(base64decode("VGV4dEJveA=="))()) then return m.Text end
+        return nil
+    end)
+    return ok and r or nil
+end
+S.avRespawn=function()
+    local c=LocalPlayer.Character
+    if c then local h=c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); if h then h.Health=0 else c:Destroy() end end
+    LocalPlayer.CharacterAdded:Wait(); task.wait(0.2)
+end
+S.avTP=function(n)
+    local rl=Workspace:FindFirstChild(loadstring(base64decode("UmVndWxhckxvYmJ5"))(),true); if not rl then return false end
+    local vp=rl:FindFirstChild(loadstring(base64decode("Vm90ZVBhZHM="))(),true); if not vp then return false end
+    local det=vp:FindFirstChild(loadstring(base64decode("RGV0ZWN0b3I="))()..n); if not det then return false end
+    for _=1,S.TOTAL_TP do
+        if not S.autoVote then return false end
+        local c=LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local root=c:WaitForChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))(),5)
+        if root then
+            if det:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) then root.CFrame=det.CFrame+Vector3.new(0,3,0)
+            elseif det:IsA(loadstring(base64decode("TW9kZWw="))()) then local pr=det.PrimaryPart or det:FindFirstChildWhichIsA(loadstring(base64decode("QmFzZVBhcnQ="))(),true); if pr then root.CFrame=pr.CFrame+Vector3.new(0,3,0) end end
+        end
+        task.wait(0.3); if not S.autoVote then return false end; S.avRespawn()
+    end
+    return true
+end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        if S.autoVote and S.targetMap and S.targetMap~=loadstring(base64decode(""))() and S.targetMap~=loadstring(base64decode("Tm9uZQ=="))() then
+            local rl=Workspace:FindFirstChild(loadstring(base64decode("UmVndWxhckxvYmJ5"))())
+            if rl then
+                for i=1,3 do
+                    if not S.autoVote then break end
+                    local pad=rl:FindFirstChild(loadstring(base64decode("Vm90ZVBhZA=="))()..i)
+                    if pad then
+                        local cm=S.avGetMap(pad)
+                        if cm and string.find(string.lower(cm),string.lower(S.targetMap),1,true) then
+                            S.avTP(i); break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- WEAPON SKINS
+S.sanitizePart=function(p) if p:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) then p.Anchored=false; p.CanCollide=false; p.CanTouch=false; p.CanQuery=false; p.Massless=true end end
+S.loadSkin=function(n)
+    local sk=S.WEAPON_SKINS[n]; if not sk then return nil end
+    local cache={AWP=S.cachedAwp,[loadstring(base64decode("VG9tbXkgR3Vu"))()]=S.cachedTommy,Minigun=S.cachedMinigun}
+    if cache[n] then return cache[n]:Clone() end
+    local ok,r=pcall(function() return game:GetObjects(sk.asset) end)
+    if ok and r and #r>0 then
+        local cont=Instance.new(loadstring(base64decode("TW9kZWw="))())
+        for _,o in ipairs(r) do o.Parent=cont end
+        if n==loadstring(base64decode("QVdQ"))() then S.cachedAwp=cont elseif n==loadstring(base64decode("VG9tbXkgR3Vu"))() then S.cachedTommy=cont elseif n==loadstring(base64decode("TWluaWd1bg=="))() then S.cachedMinigun=cont end
+        return cont:Clone()
+    end
+    return nil
+end
+S.removeSkin=function() if S.activeSkin and S.activeSkin.Parent then S.activeSkin:Destroy() end; S.activeSkin=nil end
+S.applySkin=function(tool)
+    if not tool or not tool:IsA(loadstring(base64decode("VG9vbA=="))()) or tool.Name~=loadstring(base64decode("R3Vu"))() then return end
+    if S.activeSkin and S.activeSkin.Parent then S.activeSkin:Destroy(); S.activeSkin=nil end
+    for _,d in ipairs(tool:GetDescendants()) do if d:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) or d:IsA(loadstring(base64decode("RGVjYWw="))()) or d:IsA(loadstring(base64decode("VGV4dHVyZQ=="))()) then d.Transparency=1 end end
+    if S.skin==loadstring(base64decode("Tm9uZQ=="))() then return end
+    local sk=S.WEAPON_SKINS[S.skin]; if not sk then return end
+    local h=tool:WaitForChild(loadstring(base64decode("SGFuZGxl"))(),3) or tool:FindFirstChildWhichIsA(loadstring(base64decode("QmFzZVBhcnQ="))()); if not h then return end
+    task.spawn(function()
+        local m=S.loadSkin(S.skin); if not m then return end
+        m.Name=sk.name
+        for _,d in ipairs(m:GetDescendants()) do S.sanitizePart(d) end
+        if not m.PrimaryPart then m.PrimaryPart=m:FindFirstChildWhichIsA(loadstring(base64decode("QmFzZVBhcnQ="))()) end
+        if sk.scale~=1 then pcall(function() m:ScaleTo(sk.scale) end) end
+        m:PivotTo(h.CFrame*CFrame.new(sk.position)*sk.rotation)
+        for _,p in ipairs(m:GetDescendants()) do
+            if p:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) then
+                local w=Instance.new(loadstring(base64decode("V2VsZENvbnN0cmFpbnQ="))()); w.Part0=h; w.Part1=p; w.Parent=p
+            end
+        end
+        m.Parent=tool; S.activeSkin=m
+    end)
+end
+S.trackGuns=function(c)
+    if not c then return end
+    for _,ch in ipairs(c:GetChildren()) do task.spawn(S.applySkin,ch) end
+    c.ChildAdded:Connect(function(ch) task.spawn(S.applySkin,ch) end)
+end
+task.spawn(function()
+    local bp=LocalPlayer:WaitForChild(loadstring(base64decode("QmFja3BhY2s="))(),5); if bp then S.trackGuns(bp) end
+    if LocalPlayer.Character then S.trackGuns(LocalPlayer.Character) end
+    LocalPlayer.CharacterAdded:Connect(function(c)
+        task.wait(0.5); local b=LocalPlayer:WaitForChild(loadstring(base64decode("QmFja3BhY2s="))(),5)
+        if b then S.trackGuns(b) end; S.trackGuns(c)
+    end)
+end)
+
+-- TARGET HELPERS
+S.getMurdererP=function()
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character then
+            local c=p.Character; local h=c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWQ="))())
+            if h and h.Health>0 then
+                local bp=p:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+                if c:FindFirstChild(loadstring(base64decode("S25pZmU="))()) or (bp and bp:FindFirstChild(loadstring(base64decode("S25pZmU="))())) then return p end
+            end
+        end
+    end
+end
+S.getMurdererPart=function()
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character then
+            local c=p.Character; local h=c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+            if h and h.Health>0 then
+                local bp=p:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+                if c:FindFirstChild(loadstring(base64decode("S25pZmU="))()) or (bp and bp:FindFirstChild(loadstring(base64decode("S25pZmU="))())) then
+                    return c:FindFirstChild(loadstring(base64decode("VXBwZXJUb3Jzbw=="))()) or c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+                end
+            end
+        end
+    end
+end
+S.getSheriffPart=function()
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character then
+            local bp=p:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+            if p.Character:FindFirstChild(loadstring(base64decode("R3Vu"))()) or (bp and bp:FindFirstChild(loadstring(base64decode("R3Vu"))())) then
+                local h=p.Character:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+                if h and h.Health>0 then return p.Character:FindFirstChild(loadstring(base64decode("VXBwZXJUb3Jzbw=="))()) or p.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()) end
+            end
+        end
+    end
+end
+S.getKnife=function()
+    local c=LocalPlayer.Character; local bp=LocalPlayer:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+    if c then return c:FindFirstChild(loadstring(base64decode("S25pZmU="))()) or (bp and bp:FindFirstChild(loadstring(base64decode("S25pZmU="))())) end
+end
+S.getByRole=function(rn)
+    for _,p in pairs(Players:GetPlayers()) do
+        if p.Character and p~=LocalPlayer then
+            local bp=p:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+            if rn==loadstring(base64decode("TXVyZGVy"))() and (p.Character:FindFirstChild(loadstring(base64decode("S25pZmU="))()) or (bp and bp:FindFirstChild(loadstring(base64decode("S25pZmU="))()))) then return p
+            elseif rn==loadstring(base64decode("U2hlcmlmZg=="))() and (p.Character:FindFirstChild(loadstring(base64decode("R3Vu"))()) or (bp and bp:FindFirstChild(loadstring(base64decode("R3Vu"))()))) then return p end
+        end
+    end
+end
+
+-- SILENT AIM
+S.shootMurderer=function()
+    task.spawn(function()
+        pcall(function()
+            if not S.silentAim then return end
+            local murderer=S.getMurdererPart(); if not murderer then return end
+            local c=LocalPlayer.Character; local hrp=c and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); if not hrp then return end
+            local gun=c:FindFirstChild(loadstring(base64decode("R3Vu"))())
+            if not gun then
+                local bp=LocalPlayer:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+                if bp then gun=bp:FindFirstChild(loadstring(base64decode("R3Vu"))()); if gun then gun.Parent=c; task.wait(0.1); gun=c:FindFirstChild(loadstring(base64decode("R3Vu"))()) end end
+            end
+            if not gun then return end
+            local sr=gun:FindFirstChild(loadstring(base64decode("U2hvb3Q="))(),true); if not sr then return end
+            local pp=murderer.Position + (murderer.AssemblyLinearVelocity*0.1)
+            sr:FireServer(CFrame.new(hrp.Position,pp),CFrame.new(pp))
+        end)
+    end)
+end
+S.hookGun=function(t)
+    if not t or not t:IsA(loadstring(base64decode("VG9vbA=="))()) then return end
+    t.Activated:Connect(function() if S.silentAim then S.shootMurderer() end end)
+end
+task.spawn(function()
+    local function hk(c)
+        if not c then return end
+        for _,ch in ipairs(c:GetChildren()) do if ch.Name==loadstring(base64decode("R3Vu"))() and ch:IsA(loadstring(base64decode("VG9vbA=="))()) then S.hookGun(ch) end end
+        c.ChildAdded:Connect(function(ch) if ch.Name==loadstring(base64decode("R3Vu"))() and ch:IsA(loadstring(base64decode("VG9vbA=="))()) then S.hookGun(ch) end end)
+    end
+    local bp=LocalPlayer:WaitForChild(loadstring(base64decode("QmFja3BhY2s="))(),5); if bp then hk(bp) end
+    if LocalPlayer.Character then hk(LocalPlayer.Character) end
+    LocalPlayer.CharacterAdded:Connect(function(c) task.wait(0.5); local b=LocalPlayer:WaitForChild(loadstring(base64decode("QmFja3BhY2s="))(),5); if b then hk(b) end; hk(c) end)
+end)
+
+-- LOOPS
+S.camLockLoop=function()
+    spawn(function()
+        while S.camLock do task.wait(); pcall(function()
+            local c=LocalPlayer.Character; local g=c and c:FindFirstChild(loadstring(base64decode("R3Vu"))())
+            if g and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()) then
+                local m=S.getMurdererP()
+                if m and m.Character and m.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()) then
+                    local mr=m.Character.HumanoidRootPart
+                    local dir=(mr.Position-Camera.CFrame.Position).Unit
+                    local ang=math.acos(math.clamp(Camera.CFrame.LookVector:Dot(dir),-1,1))*(180/math.pi)
+                    if ang<=S.MAX_ANGLE then
+                        Camera.CFrame=Camera.CFrame:Lerp(CFrame.lookAt(Camera.CFrame.Position,mr.Position),0.6)
+                    end
+                end
+            end
+        end) end
+    end)
+end
+S.knifeAimLoop=function()
+    spawn(function()
+        while S.knifeAim do task.wait(); pcall(function()
+            local c=LocalPlayer.Character; local JmLkAEph=c and c:FindFirstChild(loadstring(base64decode("S25pZmU="))())
+            if JmLkAEph and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()) then
+                local sp=S.getSheriffPart()
+                if sp then
+                    local dir=(sp.Position-Camera.CFrame.Position).Unit
+                    local ang=math.acos(math.clamp(Camera.CFrame.LookVector:Dot(dir),-1,1))*(180/math.pi)
+                    if ang<=S.MAX_ANGLE then Camera.CFrame=CFrame.lookAt(Camera.CFrame.Position,sp.Position) end
+                end
+            end
+        end) end
+    end)
+end
+S.flyLoop=function()
+    spawn(function()
+        while S.flying do task.wait(0.01); pcall(function()
+            local c=LocalPlayer.Character; local r=c and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local h=c and c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+            if r and h then
+                h.PlatformStand=true
+                if not S.flyGyro then S.flyGyro=Instance.new(loadstring(base64decode("Qm9keUd5cm8="))()); S.flyGyro.MaxTorque=Vector3.new(math.huge,math.huge,math.huge); S.flyGyro.P=100000; S.flyGyro.Parent=r end
+                if not S.flyVel then S.flyVel=Instance.new(loadstring(base64decode("Qm9keVZlbG9jaXR5"))()); S.flyVel.MaxForce=Vector3.new(math.huge,math.huge,math.huge); S.flyVel.Parent=r end
+                local dir=Vector3.new(0,0,0); local mv=h.MoveDirection; if mv.Magnitude>0 then dir=dir+mv end
+                if S.flyUpHeld then dir=dir+Vector3.new(0,1,0) end
+                if S.flyDownHeld then dir=dir-Vector3.new(0,1,0) end
+                S.flyVel.Velocity=dir*200; S.flyGyro.CFrame=Camera.CFrame
+            end
+        end) end
+        local c=LocalPlayer.Character; local h=c and c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); if h then h.PlatformStand=false end
+        if S.flyGyro then S.flyGyro:Destroy(); S.flyGyro=nil end
+        if S.flyVel then S.flyVel:Destroy(); S.flyVel=nil end
+    end)
+end
+S.trailLoop=function()
+    spawn(function()
+        while S.trailEnabled do wait(0.1); pcall(function()
+            local c=LocalPlayer.Character; if not c then return end
+            local t=c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); if not t then return end
+            if not t:FindFirstChild(loadstring(base64decode("RGFEYVRyYWlsQTA="))()) then
+                local a0=Instance.new(loadstring(base64decode("QXR0YWNobWVudA=="))(),t); a0.Name=loadstring(base64decode("RGFEYVRyYWlsQTA="))(); a0.Position=Vector3.new(0,2,0)
+                local a1=Instance.new(loadstring(base64decode("QXR0YWNobWVudA=="))(),t); a1.Name=loadstring(base64decode("RGFEYVRyYWlsQTE="))(); a1.Position=Vector3.new(0,-2,0)
+                local tr=Instance.new(loadstring(base64decode("VHJhaWw="))(),c); tr.Name=loadstring(base64decode("RGFEYVRyYWls"))(); tr.Attachment0=a0; tr.Attachment1=a1; tr.Lifetime=0.5
+            end
+            local tr=c:FindFirstChild(loadstring(base64decode("RGFEYVRyYWls"))())
+            if tr then
+                if S.trailRainbow then tr.Color=ColorSequence.new(Color3.fromHSV(tick()%5/5,1,1))
+                elseif S.trailGradient then tr.Color=ColorSequence.new(S.trailG1,S.trailG2)
+                else tr.Color=ColorSequence.new(S.trailColor) end
+            end
+        end) end
+        local c=LocalPlayer.Character
+        if c then
+            if c:FindFirstChild(loadstring(base64decode("RGFEYVRyYWls"))()) then c.DaDaTrail:Destroy() end
+            local t=c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+            if t then
+                if t:FindFirstChild(loadstring(base64decode("RGFEYVRyYWlsQTA="))()) then t.DaDaTrailA0:Destroy() end
+                if t:FindFirstChild(loadstring(base64decode("RGFEYVRyYWlsQTE="))()) then t.DaDaTrailA1:Destroy() end
+            end
+        end
+    end)
+end
+S.ffLoop=function()
+    spawn(function()
+        while S.ffEnabled do wait(0.2); pcall(function()
+            local c=LocalPlayer.Character; if not c then return end
+            for _,p in pairs(c:GetDescendants()) do
+                if p:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) then
+                    if not S.ffOriginals[p] then S.ffOriginals[p]={Color=p.Color,Material=p.Material} end
+                    p.Material=Enum.Material.ForceField
+                    if S.ffRainbow then p.Color=Color3.fromHSV(tick()%5/5,1,1) else p.Color=S.ffColor end
+                end
+            end
+        end) end
+        for p,d in pairs(S.ffOriginals) do if p and p.Parent then p.Color=d.Color; p.Material=d.Material end end
+        S.ffOriginals={}
+    end)
+end
+S.noclipLoop=function()
+    spawn(function()
+        while S.noclip do wait(0.01); local c=LocalPlayer.Character
+            if c then for _,p in pairs(c:GetDescendants()) do if p:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) then p.CanCollide=false end end end
+        end
+    end)
+end
+S.speedLoop=function()
+    spawn(function()
+        while S.speedHack do wait(0.1); local c=LocalPlayer.Character; local h=c and c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); if h then h.WalkSpeed=S.speedVal end end
+        local c=LocalPlayer.Character; local h=c and c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); if h then h.WalkSpeed=16 end
+    end)
+end
+S.jumpLoop=function()
+    spawn(function()
+        while S.highJump do wait(0.1); local c=LocalPlayer.Character; local h=c and c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); if h then h.JumpPower=S.jumpVal end end
+    end)
+end
+S.tpKillLoop=function()
+    spawn(function()
+        while S.tpKill do wait(0.2); pcall(function()
+            local c=LocalPlayer.Character; local hrp=c and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local JmLkAEph=S.getKnife()
+            if hrp and JmLkAEph then
+                if JmLkAEph.Parent==LocalPlayer.Backpack then JmLkAEph.Parent=c end
+                for _,p in ipairs(Players:GetPlayers()) do
+                    if p~=LocalPlayer and p.Character and p.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()) then
+                        local th=p.Character.HumanoidRootPart; local th2=p.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWQ="))())
+                        if th2 and th2.Health>0 then
+                            hrp.CFrame=th.CFrame*CFrame.new(0,0,1.5); JmLkAEph:Activate()
+                            local st=JmLkAEph:FindFirstChild(loadstring(base64decode("U3RhYg=="))())
+                            if st and st:IsA(loadstring(base64decode("UmVtb3RlRXZlbnQ="))()) then st:FireServer(th.Position) end
+                            wait(0.15)
+                        end
+                    end
+                end
+            end
+        end) end
+    end)
+end
+
+-- GOD AURA
+task.spawn(function()
+    while task.wait(0.01) do
+        if _G.GodAuraActive then
+            local c=LocalPlayer.Character; local r=c and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local h=c and c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+            if r and h and h.Health>0 then
+                local m=S.getMurdererP()
+                if m and m.Character and m.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()) then
+                    local mr=m.Character.HumanoidRootPart
+                    if (r.Position-mr.Position).Magnitude<=8 then
+                        r.CFrame=r.CFrame+((r.Position-mr.Position).Unit*5.5)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- AUTO GRAB
+task.spawn(function()
+    while task.wait(0.1) do
+        if S.autoGrab and game.PlaceId==142823291 then
+            local c=LocalPlayer.Character
+            local hasGun=c and c:FindFirstChild(loadstring(base64decode("R3Vu"))())
+            local bp=LocalPlayer:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+            if not hasGun and not (bp and bp:FindFirstChild(loadstring(base64decode("R3Vu"))())) then
+                local gun=Workspace:FindFirstChild(loadstring(base64decode("R3VuRHJvcA=="))(),true)
+                if gun and c then
+                    local part=gun:IsA(loadstring(base64decode("QmFzZVBhcnQ="))()) and gun or gun:FindFirstChildWhichIsA(loadstring(base64decode("QmFzZVBhcnQ="))())
+                    local tp=c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+                    if part and tp and firetouchinterest then
+                        pcall(function() firetouchinterest(tp,part,0); firetouchinterest(tp,part,1) end)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- AUTO PICKUP
+S.tpToGun=function()
+    pcall(function()
+        local c=LocalPlayer.Character; local r=c and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); if not r then return end
+        local g=Workspace:FindFirstChild(loadstring(base64decode("R3VuRHJvcA=="))(),true)
+        if g then
+            local t=g:FindFirstChildWhichIsA(loadstring(base64decode("QmFzZVBhcnQ="))()) or g
+            local old=r.CFrame; r.CFrame=t.CFrame; task.wait(0.05); r.CFrame=old
+        end
+    end)
+end
+task.spawn(function()
+    while task.wait(0.05) do if S.autoPistol then S.tpToGun() end end
+end)
+
+-- FE ANIMS
+S.FEState={all=loadstring(base64decode("RGVmYXVsdA=="))()}
+S.FEEnabled=false
+S.FEOrig={}
+S.FEPresets={
+    Vampire={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwODM0NDU4NTU="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwODM0NzM5MzA="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwODM0NjIwNzc="))()},
+    Hero={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjExMTI5NQ=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjEyMjI4Nw=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjExNzA3Ng=="))()},
+    Zombie={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjE1ODkyOQ=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjE2ODAzMg=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjE2MzY4Mg=="))()},
+    Mage={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzcwNzc0MjE0Mg=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzcwNzg5NzMwOQ=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzcwNzg2MTYxMw=="))()},
+    Ghost={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjAwNjc3OA=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjAxMDM4Mg=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzYxNjAxMzIxNg=="))()},
+    Astronaut={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzg5MTYyMTM2Ng=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzg5MTY2NzEzOA=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzg5MTYzNjM5Mw=="))()},
+    Ninja={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzY1NjExNzQwMA=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzY1NjEyMTc2Ng=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzY1NjExODg1Mg=="))()},
+    Werewolf={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwODMxOTU1MTc="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwODMxNzgzMzk="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwODMyMTY2OTA="))()},
+    Cartoon={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc0MjYzNzU0NA=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc0MjY0MDAyNg=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc0MjYzODg0Mg=="))()},
+    Pirate={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc1MDc4MTg3NA=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc1MDc4NTY5Mw=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc1MDc4MzczOA=="))()},
+    Sneaky={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzExMzI0NzM4NDI="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzExMzI1MTAxMzM="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzExMzI0OTQyNzQ="))()},
+    Toy={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc4Mjg0MTQ5OA=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc4Mjg0MzM0NQ=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzc4Mjg0MjcwOA=="))()},
+    Knight={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzY1NzU5NTc1Nw=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzY1NzU1MjEyNA=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzY1NzU2NDU5Ng=="))()},
+    Popstar={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEyMTI5MDA5ODU="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEyMTI5ODAzMzg="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEyMTI5ODAzNDg="))()},
+    Princess={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzk0MTAwMzY0Nw=="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzk0MTAyODkwMg=="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzk0MTAxNTI4MQ=="))()},
+    Cowboy={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwMTQzOTA0MTg="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwMTQ0MjE1NDE="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzEwMTQ0MDE2ODM="))()},
+    Patrol={idle1=loadstring(base64decode("cmJ4YXNzZXRpZDovLzExNDk2MTI4ODI="))(),walk=loadstring(base64decode("cmJ4YXNzZXRpZDovLzExNTEyMzE0OTM="))(),run=loadstring(base64decode("cmJ4YXNzZXRpZDovLzExNTA5Njc5NDk="))()},
+}
+S.FEMap={
+    idle={folder=loadstring(base64decode("aWRsZQ=="))(),slots={{child=loadstring(base64decode("QW5pbWF0aW9uMQ=="))(),key=loadstring(base64decode("aWRsZTE="))()}}},
+    walk={folder=loadstring(base64decode("d2Fsaw=="))(),slots={{child=loadstring(base64decode("V2Fsa0FuaW0="))(),key=loadstring(base64decode("d2Fsaw=="))()}}},
+    run={folder=loadstring(base64decode("cnVu"))(),slots={{child=loadstring(base64decode("UnVuQW5pbQ=="))(),key=loadstring(base64decode("cnVu"))()}}},
+}
+S.applyFE=function(c)
+    if not c then return end
+    local a=c:FindFirstChild(loadstring(base64decode("QW5pbWF0ZQ=="))()); local h=c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); if not a or not h then return end
+    for _,v in pairs(S.FEMap) do
+        local f=a:FindFirstChild(v.folder)
+        if f then for _,s in ipairs(v.slots) do
+            local an=f:FindFirstChild(s.child)
+            if an and an:IsA(loadstring(base64decode("QW5pbWF0aW9u"))()) then
+                if not S.FEOrig[s.key] then S.FEOrig[s.key]=an.AnimationId end
+                local name=S.FEState.all
+                if name==loadstring(base64decode("RGVmYXVsdA=="))() then an.AnimationId=S.FEOrig[s.key] or an.AnimationId
+                else local p=S.FEPresets[name]; if p and p[s.key] then an.AnimationId=p[s.key] end end
+            end
+        end end
+    end
+end
+
+-- FLING
+S.fling={active=false,queue={},idx=1,conn=nil,pos=nil,camSubject=nil}
+S.cleanupFling=function()
+    if S.fling.conn then S.fling.conn:Disconnect(); S.fling.conn=nil end
+    S.fling.active=false
+    if S.fling.camSubject then pcall(function() Camera.CameraSubject=S.fling.camSubject end); S.fling.camSubject=nil
+    else local c=LocalPlayer.Character; local h=c and c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); if h then pcall(function() Camera.CameraSubject=h end) end end
+    local c=LocalPlayer.Character
+    if c then
+        local r=c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local h=c:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+        if r then
+            for _,ch in pairs(r:GetChildren()) do
+                if ch:IsA(loadstring(base64decode("Qm9keVZlbG9jaXR5"))()) or ch:IsA(loadstring(base64decode("Qm9keUd5cm8="))()) or ch:IsA(loadstring(base64decode("TGluZWFyVmVsb2NpdHk="))()) then ch:Destroy() end
+            end
+        end
+        if h then pcall(function() h.PlatformStand=false; h:ChangeState(Enum.HumanoidStateType.GettingUp) end) end
+    end
+end
+S.startFling=function(tp)
+    if not tp or not tp.Character then return end
+    local tc=tp.Character; local th=tc:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))()); local tr=th and th.RootPart; local head=tc:FindFirstChild(loadstring(base64decode("SGVhZA=="))())
+    if not head and not tr then return end
+    local mc=LocalPlayer.Character; if not mc then return end
+    local mhrp=mc:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local mh=mc:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+    if not mhrp or not mh then return end
+    S.cleanupFling()
+    S.fling.active=true; S.fling.camSubject=Camera.CameraSubject
+    Camera.CameraSubject=head or th
+    local bv=Instance.new(loadstring(base64decode("Qm9keVZlbG9jaXR5"))()); bv.MaxForce=Vector3.new(1e6,1e6,1e6); bv.Velocity=Vector3.new(9e8,9e8,9e8); bv.Parent=mhrp
+    S.fling.conn=RunService.Stepped:Connect(function()
+        if not S.fling.active then return end
+        local t=tp.Character; if not t or not t.Parent then S.cleanupFling(); return end
+        local th2=t:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local hd=t:FindFirstChild(loadstring(base64decode("SGVhZA=="))())
+        local part=hd or th2; if not part then S.cleanupFling(); return end
+        local mv=part.AssemblyLinearVelocity.Magnitude
+        if mv>780 then S.cleanupFling(); return end
+        mhrp.CFrame=CFrame.new(part.Position+Vector3.new(math.random(-3,3),math.random(-1,1),math.random(-3,3)))*CFrame.Angles(math.random()*6,math.random()*6,math.random()*6)
+        pcall(function() mhrp.Velocity=Vector3.new(9e7,1.8e9,9e7); mhrp.RotVelocity=Vector3.new(9e8,9e8,9e8) end)
+    end)
+    task.delay(12,function() if S.fling.active then S.cleanupFling() end end)
+end
+S.flingMurderer=function() local m=S.getByRole(loadstring(base64decode("TXVyZGVy"))()); if m and m~=LocalPlayer then S.startFling(m) end end
+S.flingSheriff=function() local s=S.getByRole(loadstring(base64decode("U2hlcmlmZg=="))()); if s and s~=LocalPlayer then S.startFling(s) end end
+S.flingAll=function()
+    local mc=LocalPlayer.Character; local mhrp=mc and mc:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+    local list={}
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character and mhrp then
+            local hrp=p.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+            if hrp then table.insert(list,{p=p,d=(mhrp.Position-hrp.Position).Magnitude}) end
+        end
+    end
+    if #list==0 then return end
+    table.sort(list,function(a,b) return a.d<b.d end)
+    S.startFling(list[1].p)
+end
+
+-- KILL ALL / SEX / etc
+S.killAll=function()
+    task.spawn(function()
+        local c=LocalPlayer.Character; if not c then return end
+        local bp=LocalPlayer:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+        local JmLkAEph=c:FindFirstChild(loadstring(base64decode("S25pZmU="))()) or (bp and bp:FindFirstChild(loadstring(base64decode("S25pZmU="))()))
+        if JmLkAEph and c~=JmLkAEph.Parent then JmLkAEph.Parent=c; task.wait(0.1) end
+        JmLkAEph=c:FindFirstChild(loadstring(base64decode("S25pZmU="))()); if not JmLkAEph then return end
+        local h=JmLkAEph:FindFirstChild(loadstring(base64decode("SGFuZGxl"))()); local ev=JmLkAEph:FindFirstChild(loadstring(base64decode("RXZlbnRz"))()); local ht=ev and ev:FindFirstChild(loadstring(base64decode("SGFuZGxlVG91Y2hlZA=="))())
+        if not h or not ht then return end
+        local tg={}
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p~=LocalPlayer and p.Character then
+                local ph=p.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local hm=p.Character:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+                if ph and hm and hm.Health>0 then table.insert(tg,ph) end
+            end
+        end
+        if #tg==0 then return end
+        for _,t in ipairs(tg) do pcall(function() h.CFrame=t.CFrame; task.wait(); ht:FireServer(t); task.wait() end) end
+    end)
+end
+S.sexTarget=function(tp)
+    if not tp or tp==LocalPlayer then return end
+    local c=LocalPlayer.Character; local r=c and c:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+    local tc=tp.Character; local tr=tc and tc:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))()); local th=tc and tc:FindFirstChildOfClass(loadstring(base64decode("SHVtYW5vaWQ="))())
+    if r and tr and th then
+        local sp=r.CFrame; th.Sit=true
+        for i=1,100 do
+            if not tr.Parent or th.Health<=0 then break end
+            for dsBxOinB=1,5 do r.CFrame=tr.CFrame*CFrame.new(0,-1,0.2+(dsBxOinB*0.2)); task.wait(0.03) end
+            for dsBxOinB=1,5 do r.CFrame=tr.CFrame*CFrame.new(0,-1,1.2-(dsBxOinB*0.2)); task.wait(0.03) end
+        end
+        th.Sit=false; task.wait(0.3); if r.Parent then r.CFrame=sp end
+    end
+end
+S.godAuraToggle=function(st) _G.GodAuraActive=st end
+
+-- FPS/PING
+S.fpsToggle=function()
+    local Stats=game:GetService(loadstring(base64decode("U3RhdHM="))())
+    local gui=Instance.new(loadstring(base64decode("U2NyZWVuR3Vp"))()); gui.Name=loadstring(base64decode("RGFEYUZQUw=="))(); gui.Parent=PlayerGui; gui.ResetOnSpawn=false
+    local lbl=Instance.new(loadstring(base64decode("VGV4dExhYmVs"))(),gui); lbl.Size=UDim2.new(0,200,0,30); lbl.Position=UDim2.new(0,10,0,10); lbl.BackgroundTransparency=0.5; lbl.BackgroundColor3=Color3.new(0,0,0); lbl.TextColor3=Color3.new(0,255,0); lbl.TextSize=14; lbl.Font=Enum.Font.Code; lbl.Text=loadstring(base64decode("RlBTOiAtLQ=="))()
+    local lt=tick(); local f=0
+    RunService.RenderStepped:Connect(function()
+        f=f+1
+        if tick()-lt>=1 then
+            local fps=f; f=0; lt=tick()
+            lbl.Text=loadstring(base64decode("RlBTOiA="))()..fps
+        end
+    end)
+end
+
+-- SCREEN
+S.screenLoop=function()
+    if S.screenConn then S.screenConn:Disconnect() end
+    S.screenConn=RunService.RenderStepped:Connect(function()
+        Camera.CFrame=Camera.CFrame*CFrame.new(0,0,0,1,0,0,0,(0.65+S.screenIntensity),0,0,0,1)
+    end)
+end
+
+-- SKYBOX
+S.applySkybox=function(n)
+    local sb=S.Skybox[n]; if not sb then return end
+    local sky=Lighting:FindFirstChildOfClass(loadstring(base64decode("U2t5"))()) or Instance.new(loadstring(base64decode("U2t5"))(),Lighting)
+    sky.SkyboxBk=sb.Bk; sky.SkyboxDn=sb.Dn; sky.SkyboxFt=sb.Ft
+    sky.SkyboxLf=sb.Lf; sky.SkyboxRt=sb.Rt; sky.SkyboxUp=sb.Up
+end
+
+-- ANIME
+S.animeToggle=function(v)
+    if S.animeGui then S.animeGui:Destroy(); S.animeGui=nil end
+    if v then
+        S.animeGui=Instance.new(loadstring(base64decode("U2NyZWVuR3Vp"))(),PlayerGui); S.animeGui.Name=loadstring(base64decode("RGFEYUFuaW1l"))(); S.animeGui.ResetOnSpawn=false
+        local img=Instance.new(loadstring(base64decode("SW1hZ2VMYWJlbA=="))(),S.animeGui); img.Image=loadstring(base64decode("cmJ4YXNzZXRpZDovLzExNzc4MzAzNTQyMzU3MA=="))(); img.Size=UDim2.new(0,250,0,300); img.Position=UDim2.new(1,-20,0,10); img.AnchorPoint=Vector2.new(1,0); img.BackgroundTransparency=1
+    end
+end
+
+-- TIME LOOP
+task.spawn(function()
+    while true do wait(0.5)
+        pcall(function()
+            if S.timeEnabled then Lighting.ClockTime=S.timeValue end
+            if S.fullBright then Lighting.Brightness=3; Lighting.GlobalShadows=false; Lighting.OutdoorAmbient=Color3.new(1,1,1) end
+        end)
+    end
+end)
+
+-- ==== BUILD MENU ====
+local pMain=S.CreateNav({Title=loadstring(base64decode("TWFpbg=="))(),Sub=loadstring(base64decode("Y29tYmF0IC8gZmFybQ=="))()})
+S.AddToggle(pMain,loadstring(base64decode("Q2FtTG9jayBBaW1ib3Q="))(),loadstring(base64decode("Rm9yIHNoZXJpZmYu"))(),false,function(st) S.camLock=st; if st then S.camLockLoop() end end)
+S.AddToggle(pMain,loadstring(base64decode("S25pZmUgQWltYm90"))(),loadstring(base64decode("Rm9yIG11cmRlcmVyLg=="))(),false,function(st) S.knifeAim=st; if st then S.knifeAimLoop() end end)
+S.AddToggle(pMain,loadstring(base64decode("U2lsZW50IEFpbQ=="))(),loadstring(base64decode("QXV0by1zaG9vdC4="))(),false,function(st) S.silentAim=st end)
+S.AddToggle(pMain,loadstring(base64decode("V2FsbHNob3Q="))(),loadstring(base64decode("U2hvb3QgdGhyb3VnaCB3YWxscy4="))(),false,function(st) _G.WallshotEnabled=st end)
+S.AddToggle(pMain,loadstring(base64decode("QXV0byBQaWNrdXA="))(),loadstring(base64decode("VGVsZXBvcnRzIHRvIGd1bi4="))(),false,function(st) S.autoPistol=st end)
+S.AddToggle(pMain,loadstring(base64decode("QXV0byBHcmFiIEd1bg=="))(),loadstring(base64decode("VG91Y2ggcGlja3VwLg=="))(),false,function(st) S.autoGrab=st end)
+S.AddToggle(pMain,loadstring(base64decode("QXV0byBGYXJtIENvaW5z"))(),loadstring(base64decode("QXV0byBjb2xsZWN0Lg=="))(),false,function(st) S.autoFarm=st end)
+S.AddToggle(pMain,loadstring(base64decode("VFAgS2lsbCBBdXJh"))(),loadstring(base64decode("S2lsbHMgYWxsIGFzIG11cmRlcmVyLg=="))(),false,function(st) S.tpKill=st; if st then S.tpKillLoop() end end)
+S.AddButton(pMain,loadstring(base64decode("S2lsbCBBbGw="))(),function() S.killAll() end)
+S.AddToggle(pMain,loadstring(base64decode("Rmx5"))(),loadstring(base64decode("RnJlZSBmbGlnaHQu"))(),false,function(st) S.flying=st; if st then S.flyLoop() end; S.FlyUp.Visible=st; S.FlyDown.Visible=st end)
+
+local pVis=S.CreateNav({Title=loadstring(base64decode("VmlzdWFscw=="))(),Sub=loadstring(base64decode("ZXNwIC8gZWZmZWN0cw=="))()})
+S.AddToggle(pVis,loadstring(base64decode("RnVsbCBCcmlnaHQ="))(),loadstring(base64decode("QnJpZ2h0ZW5zIG1hcC4="))(),false,function(st)
+    if st then Lighting.Ambient=Color3.fromRGB(255,255,255); Lighting.Brightness=3; Lighting.OutdoorAmbient=Color3.fromRGB(255,255,255)
+    else Lighting.Ambient=Color3.fromRGB(70,70,70); Lighting.Brightness=2; Lighting.OutdoorAmbient=Color3.fromRGB(128,128,128) end
+end)
+S.AddToggle(pVis,loadstring(base64decode("VHJhaWw="))(),loadstring(base64decode("UmFpbmJvdyB0cmFpbC4="))(),false,function(st) S.trailEnabled=st; if st then S.trailLoop() end end)
+S.AddToggle(pVis,loadstring(base64decode("VHJhaWwgUmFpbmJvdw=="))(),loadstring(base64decode("UmFpbmJvdyBjb2xvci4="))(),false,function(st) S.trailRainbow=st; if st then S.trailGradient=false end end)
+S.AddToggle(pVis,loadstring(base64decode("VHJhaWwgR3JhZGllbnQ="))(),loadstring(base64decode("R3JhZGllbnQgY29sb3Iu"))(),false,function(st) S.trailGradient=st; if st then S.trailRainbow=false end end)
+S.AddToggle(pVis,loadstring(base64decode("Rm9yY2VGaWVsZA=="))(),loadstring(base64decode("RkYgb24gYm9keS4="))(),false,function(st) S.ffEnabled=st; if st then S.ffLoop() end end)
+S.AddToggle(pVis,loadstring(base64decode("RkYgUmFpbmJvdw=="))(),loadstring(base64decode("UmFpbmJvdyBGRi4="))(),false,function(st) S.ffRainbow=st end)
+S.AddDropdown(pVis,loadstring(base64decode("U2t5Ym94"))(),{loadstring(base64decode("SEQ="))(),loadstring(base64decode("U25vdw=="))(),loadstring(base64decode("Qmx1ZVNwYWNl"))(),loadstring(base64decode("UGluaw=="))(),loadstring(base64decode("U3Vuc2V0"))(),loadstring(base64decode("R2FsYXh5"))(),loadstring(base64decode("U3BhY2U="))()},function(c) S.currentSkybox=c; if S.skyboxEnabled then S.applySkybox(c) end end)
+S.AddToggle(pVis,loadstring(base64decode("RW5hYmxlIFNreWJveA=="))(),loadstring(base64decode("Q3VzdG9tIHNreWJveC4="))(),false,function(st) S.skyboxEnabled=st; if st then S.applySkybox(S.currentSkybox) else local s=Lighting:FindFirstChildOfClass(loadstring(base64decode("U2t5"))()); if s then s:Destroy() end end end)
+S.AddToggle(pVis,loadstring(base64decode("VGltZSBDaGFuZ2U="))(),loadstring(base64decode("Q2hhbmdlIHRpbWUu"))(),false,function(st) S.timeEnabled=st end)
+S.AddSlider(pVis,loadstring(base64decode("VGltZSBWYWx1ZQ=="))(),loadstring(base64decode("MC0yNC4="))(),0,24,12,function(v) S.timeValue=v end)
+S.AddToggle(pVis,loadstring(base64decode("U2NyZWVuIEVmZmVjdA=="))(),loadstring(base64decode("U3RyZXRjaCBzY3JlZW4u"))(),false,function(st) S.screenEnabled=st; if st then S.screenLoop() elseif S.screenConn then S.screenConn:Disconnect(); S.screenConn=nil end end)
+S.AddSlider(pVis,loadstring(base64decode("U2NyZWVuIEludGVuc2l0eQ=="))(),loadstring(base64decode("QW1vdW50Lg=="))(),0,10,0,function(v) S.screenIntensity=v/10 end)
+S.AddToggle(pVis,loadstring(base64decode("QW5pbWUgSW1hZ2U="))(),loadstring(base64decode("U2hvdyBpbWFnZS4="))(),false,function(st) S.animeToggle(st) end)
+S.AddButton(pVis,loadstring(base64decode("RlBTIENvdW50ZXI="))(),function() S.fpsToggle() end)
+S.AddToggle(pVis,loadstring(base64decode("R3VuIFRyYWNlcg=="))(),loadstring(base64decode("U2hvdyBiZWFtLg=="))(),false,function(st) S.tracer=st end)
+S.AddDropdown(pVis,loadstring(base64decode("V2VhcG9uIFNraW4="))(),{loadstring(base64decode("Tm9uZQ=="))(),loadstring(base64decode("QVdQ"))(),loadstring(base64decode("VG9tbXkgR3Vu"))(),loadstring(base64decode("TWluaWd1bg=="))()},function(c) S.skin=c; S.removeSkin(); local ch=LocalPlayer.Character; if ch then local g=ch:FindFirstChild(loadstring(base64decode("R3Vu"))()); if g then S.applySkin(g) end end end)
+S.AddToggle(pVis,loadstring(base64decode("QXVyYTogQW5nZWw="))(),loadstring(base64decode("QW5nZWwgYXVyYS4="))(),false,function(st) S.auraToggle(loadstring(base64decode("QW5nZWw="))(),st) end)
+S.AddToggle(pVis,loadstring(base64decode("QXVyYTogV2luZA=="))(),loadstring(base64decode("V2luZCBhdXJhLg=="))(),false,function(st) S.auraToggle(loadstring(base64decode("V2luZA=="))(),st) end)
+S.AddToggle(pVis,loadstring(base64decode("QXVyYTogU3RhcmxpZ2h0"))(),loadstring(base64decode("U3RhcmxpZ2h0Lg=="))(),false,function(st) S.auraToggle(loadstring(base64decode("U3RhcmxpZ2h0"))(),st) end)
+S.AddToggle(pVis,loadstring(base64decode("QXVyYTogSGVhdmVubHk="))(),loadstring(base64decode("SGVhdmVubHku"))(),false,function(st) S.auraToggle(loadstring(base64decode("SGVhdmVubHk="))(),st) end)
+S.AddToggle(pVis,loadstring(base64decode("TmVidWxh"))(),loadstring(base64decode("RGFyayBwdXJwbGUu"))(),false,function(st) S.nebulaToggle(st) end)
+
+local pAV=S.CreateNav({Title=loadstring(base64decode("QXV0byBWb3Rl"))(),Sub=loadstring(base64decode("bWFwIHZvdGluZw=="))()})
+S.AddDropdown(pAV,loadstring(base64decode("TWFw"))(),S.MAP_LIST,function(c) S.targetMap=c end)
+S.AddToggle(pAV,loadstring(base64decode("QXV0byBWb3Rl"))(),loadstring(base64decode("QXV0byB2b3RlLg=="))(),false,function(st) S.autoVote=st end)
+S.AddButton(pAV,loadstring(base64decode("Vm90ZSBOb3c="))(),function()
+    local rl=Workspace:FindFirstChild(loadstring(base64decode("UmVndWxhckxvYmJ5"))()); if not rl then return end
+    for i=1,3 do local pad=rl:FindFirstChild(loadstring(base64decode("Vm90ZVBhZA=="))()..i); if pad then local cm=S.avGetMap(pad); if cm and string.find(string.lower(cm),string.lower(S.targetMap),1,true) then S.avTP(i); break end end end
+end)
+
+local pTP=S.CreateNav({Title=loadstring(base64decode("VGVsZXBvcnQ="))(),Sub=loadstring(base64decode("ZmFzdCB0cmF2ZWw="))()})
+S.AddButton(pTP,loadstring(base64decode("VG8gU2hlcmlmZg=="))(),function()
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character then
+            local bp=p:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+            if p.Character:FindFirstChild(loadstring(base64decode("R3Vu"))()) or (bp and bp:FindFirstChild(loadstring(base64decode("R3Vu"))())) then
+                local r=p.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+                if r then LocalPlayer.Character:MoveTo(r.Position+Vector3.new(0,0,2)); return end
+            end
+        end
+    end
+end)
+S.AddButton(pTP,loadstring(base64decode("VG8gTXVyZGVyZXI="))(),function()
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and p.Character then
+            local bp=p:FindFirstChild(loadstring(base64decode("QmFja3BhY2s="))())
+            if p.Character:FindFirstChild(loadstring(base64decode("S25pZmU="))()) or (bp and bp:FindFirstChild(loadstring(base64decode("S25pZmU="))())) then
+                local r=p.Character:FindFirstChild(loadstring(base64decode("SHVtYW5vaWRSb290UGFydA=="))())
+                if r then LocalPlayer.Character:MoveTo(r.Position+Vector3.new(0,0,2)); return end
+            end
+        end
+    end
+end)
+S.AddButton(pTP,loadstring(base64decode("VG8gTG9iYnk="))(),function()
+    local c=LocalPlayer.Character; if not c then return end
+    for _,v in ipairs(Workspace:GetDescendants()) do
+        if v:IsA(loadstring(base64decode("U3Bhd25Mb2NhdGlvbg=="))()) then c:MoveTo(v.Position+Vector3.new(0,3,0)); return end
+    end
+end)
+
+local pFun=S.CreateNav({Title=loadstring(base64decode("RnVu"))(),Sub=loadstring(base64decode("bWlzYw=="))()})
+local sexBox=S.AddText(pFun,loadstring(base64decode("UGxheWVyIG5hbWUuLi4="))(),nil)
+S.AddButton(pFun,loadstring(base64decode("U0VYIEJZIE5BTUU="))(),function()
+    local tn=sexBox.Text:lower(); if tn==loadstring(base64decode(""))() then return end
+    for _,p in pairs(Players:GetPlayers()) do
+        if p~=LocalPlayer and (p.Name:lower():sub(1,#tn)==tn or p.DisplayName:lower():sub(1,#tn)==tn) then S.sexTarget(p); return end
+    end
+end)
+S.AddToggle(pFun,loadstring(base64decode("R29kIEF1cmE="))(),loadstring(base64decode("QW50aS1rbmlmZSBzaGllbGQu"))(),false,function(st) S.godAuraToggle(st) end)
+
+local pPl=S.CreateNav({Title=loadstring(base64decode("UGxheWVy"))(),Sub=loadstring(base64decode("bW92ZW1lbnQ="))()})
+S.AddToggle(pPl,loadstring(base64decode("Tm9jbGlw"))(),loadstring(base64decode("V2FsayB0aHJvdWdoIHdhbGxzLg=="))(),false,function(st) S.noclip=st; if st then S.noclipLoop() end end)
+S.AddToggle(pPl,loadstring(base64decode("U3BlZWQgSGFjaw=="))(),loadstring(base64decode("RmFzdGVyIHdhbGsu"))(),false,function(st) S.speedHack=st; if st then S.speedLoop() end end)
+S.AddSlider(pPl,loadstring(base64decode("U3BlZWQgVmFsdWU="))(),loadstring(base64decode("QW1vdW50Lg=="))(),10,300,50,function(v) S.speedVal=v end)
+S.AddToggle(pPl,loadstring(base64decode("SGlnaCBKdW1w"))(),loadstring(base64decode("QmlnZ2VyIGp1bXAu"))(),false,function(st) S.highJump=st; if st then S.jumpLoop() end end)
+S.AddSlider(pPl,loadstring(base64decode("SnVtcCBWYWx1ZQ=="))(),loadstring(base64decode("QW1vdW50Lg=="))(),20,300,80,function(v) S.jumpVal=v end)
+S.AddDropdown(pPl,loadstring(base64decode("RkUgQW5pbWF0aW9ucw=="))(),{loadstring(base64decode("RGVmYXVsdA=="))(),loadstring(base64decode("VmFtcGlyZQ=="))(),loadstring(base64decode("SGVybw=="))(),loadstring(base64decode("Wm9tYmll"))(),loadstring(base64decode("TWFnZQ=="))(),loadstring(base64decode("R2hvc3Q="))(),loadstring(base64decode("QXN0cm9uYXV0"))(),loadstring(base64decode("TmluamE="))(),loadstring(base64decode("V2VyZXdvbGY="))(),loadstring(base64decode("Q2FydG9vbg=="))(),loadstring(base64decode("UGlyYXRl"))(),loadstring(base64decode("U25lYWt5"))(),loadstring(base64decode("VG95"))(),loadstring(base64decode("S25pZ2h0"))(),loadstring(base64decode("UG9wc3Rhcg=="))(),loadstring(base64decode("UHJpbmNlc3M="))(),loadstring(base64decode("Q293Ym95"))(),loadstring(base64decode("UGF0cm9s"))()},function(c)
+    S.FEState.all=c
+    if S.FEEnabled and LocalPlayer.Character then task.spawn(function() S.applyFE(LocalPlayer.Character) end) end
+end)
+S.AddToggle(pPl,loadstring(base64decode("RW5hYmxlIEZFIEFuaW1z"))(),loadstring(base64decode("QXBwbHkgY3VzdG9tIGFuaW1zLg=="))(),false,function(st)
+    S.FEEnabled=st
+    if st then
+        if LocalPlayer.Character then task.spawn(function() S.applyFE(LocalPlayer.Character) end) end
+        LocalPlayer.CharacterAdded:Connect(function(c) task.wait(1); if S.FEEnabled then task.spawn(function() S.applyFE(c) end) end end)
+    end
+end)
+
+local pFl=S.CreateNav({Title=loadstring(base64decode("Rmxpbmc="))(),Sub=loadstring(base64decode("cGh5c2ljcw=="))()})
+S.AddButton(pFl,loadstring(base64decode("RmxpbmcgTXVyZGVyZXI="))(),function() S.flingMurderer() end)
+S.AddButton(pFl,loadstring(base64decode("RmxpbmcgU2hlcmlmZg=="))(),function() S.flingSheriff() end)
+S.AddButton(pFl,loadstring(base64decode("RmxpbmcgRXZlcnlvbmU="))(),function() S.flingAll() end)
+
+-- ==== OPEN/CLOSE ====
+OpenBtn.MouseButton1Click:Connect(function() Main.Visible=not Main.Visible end)
+UIS.InputBegan:Connect(function(input,proc)
+    if proc then return end
+    if input.KeyCode==Enum.KeyCode.RightShift then Main.Visible=not Main.Visible end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if S.autoFarm then task.wait(1) end
+end)
+
+print(loadstring(base64decode("W0RBLURBIE1NMiB2OC44LjMgUEFDS0VEXTogTG9hZGVkIQ=="))())
+end
+6rVgd6Bl(by31D)
+end)(...)
