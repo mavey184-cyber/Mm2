@@ -1,0 +1,1456 @@
+-- ================================================================
+--  DaDa — FULL v9 (Kity themes + notifications + configs + все фичи)
+-- ================================================================
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Stats = game:GetService("Stats")
+local CollectionService = game:GetService("CollectionService")
+local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
+local LP = Players.LocalPlayer
+
+-- 6 ТЕМ ИЗ KITY
+local Themes = {
+    Default = {Background=Color3.fromRGB(10,9,8),Inline=Color3.fromRGB(15,13,11),Text=Color3.fromRGB(245,242,238),Element=Color3.fromRGB(15,13,11),Image=Color3.fromRGB(245,242,238),Accent=Color3.fromRGB(224,116,24),LightAccent=Color3.fromRGB(255,170,54),Border=Color3.fromRGB(50,34,23)},
+    White = {Background=Color3.fromRGB(18,18,20),Inline=Color3.fromRGB(28,28,31),Text=Color3.fromRGB(248,248,250),Element=Color3.fromRGB(35,35,39),Image=Color3.fromRGB(248,248,250),Accent=Color3.fromRGB(235,235,240),LightAccent=Color3.fromRGB(255,255,255),Border=Color3.fromRGB(105,105,115)},
+    Blue = {Background=Color3.fromRGB(7,14,25),Inline=Color3.fromRGB(11,24,42),Text=Color3.fromRGB(232,244,255),Element=Color3.fromRGB(14,32,55),Image=Color3.fromRGB(225,242,255),Accent=Color3.fromRGB(43,153,255),LightAccent=Color3.fromRGB(118,202,255),Border=Color3.fromRGB(25,77,125)},
+    Pink = {Background=Color3.fromRGB(25,10,20),Inline=Color3.fromRGB(42,16,34),Text=Color3.fromRGB(255,239,248),Element=Color3.fromRGB(54,20,44),Image=Color3.fromRGB(255,232,246),Accent=Color3.fromRGB(244,78,164),LightAccent=Color3.fromRGB(255,145,204),Border=Color3.fromRGB(119,35,83)},
+    Purple = {Background=Color3.fromRGB(15,10,28),Inline=Color3.fromRGB(27,17,49),Text=Color3.fromRGB(242,235,255),Element=Color3.fromRGB(37,23,65),Image=Color3.fromRGB(239,230,255),Accent=Color3.fromRGB(154,91,255),LightAccent=Color3.fromRGB(202,157,255),Border=Color3.fromRGB(78,42,135)},
+    Green = {Background=Color3.fromRGB(8,20,16),Inline=Color3.fromRGB(13,35,27),Text=Color3.fromRGB(232,255,242),Element=Color3.fromRGB(17,47,36),Image=Color3.fromRGB(225,255,237),Accent=Color3.fromRGB(38,199,126),LightAccent=Color3.fromRGB(113,239,175),Border=Color3.fromRGB(24,102,70)},
+}
+local currentTheme = Themes.Purple
+
+local ACCENT=currentTheme.Accent; local ACCENT2=currentTheme.LightAccent
+local BG_MAIN=currentTheme.Background; local BG_SIDE=currentTheme.Inline
+local BG_PANEL=currentTheme.Inline; local BG_HEADER=currentTheme.Element
+local BG_ROW=currentTheme.Element; local BG_SLIDER=currentTheme.Border
+local BG_ON=currentTheme.Accent; local BG_OFF=currentTheme.Border
+local TEXT_MAIN=currentTheme.Text; local TEXT_DIM=currentTheme.Text
+local STROKE=currentTheme.Border
+local WIN_TRANS=0.18; local SIDE_TRANS=0.15; local PANEL_TRANS=0.22
+local HEADER_TRANS=0.18; local ROW_TRANS=0.25
+
+local ST={
+    silent=false, predict=true, force=false, auto_shoot=false, auto_delay=0,
+    hit_part="UpperTorso", stand_off=15, fov_circle=false, fov_size=120, triggerbot=false,
+    getgun=false, getgun_mode="Touch", getgun_interval=0.15, getgun_tp_back=true,
+    auto_knife_throw=false, knife_predict=true, knife_lead=100, antifling=false,
+    esp_on=false, esp_box=true, esp_box_col=Color3.fromRGB(160,150,200),
+    esp_name=true, esp_name_col=Color3.fromRGB(180,180,220),
+    esp_dist=true, esp_dist_col=Color3.fromRGB(210,210,225),
+    esp_health=true, esp_skel=false, esp_skel_col=Color3.fromRGB(210,210,225),
+    esp_line=false, esp_chams=false, esp_chams_roles=true, esp_max_dist=1000, esp_flags=false,
+    fullbright=false, fov_changer=false, fov_value=90,
+    world_color=false, world_color_val=Color3.fromRGB(255,255,255), skybox="Default",
+    fly=false, fly_speed=50, noclip=false, inf_jump=false,
+    speed_hack=false, speed_val=32, jump_power=false, jump_val=80,
+    wallhop=false, bhop=false, gravity=false, gravity_val=196,
+    char_transparency=false, char_trans_val=0.3,
+    fake_headless=false, fake_korblox=false,
+    fling_murder=false, fling_sheriff=false,
+    killaura=false, killaura_dist=30, autoknife=false,
+    model_on=false, model_id="",
+    quick=false, quick_corner="Bottom-Right", quick_offset_y=280,
+    quick_features={
+        {name="Silent",flag="silent"}, {name="AutoShoot",flag="auto_shoot"},
+        {name="GetGun",flag="getgun"}, {name="ESP",flag="esp"},
+    },
+    quick_state={},
+}
+for _,f in ipairs(ST.quick_features) do ST.quick_state[f.flag]=false end
+
+local themeUpdaters={}
+local function applyTheme(name)
+    local t=Themes[name]; if not t then return end
+    currentTheme=t
+    ACCENT=t.Accent; ACCENT2=t.LightAccent
+    BG_MAIN=t.Background; BG_SIDE=t.Inline; BG_PANEL=t.Inline
+    BG_HEADER=t.Element; BG_ROW=t.Element; BG_SLIDER=t.Border
+    BG_ON=t.Accent; BG_OFF=t.Border; TEXT_MAIN=t.Text; TEXT_DIM=t.Text; STROKE=t.Border
+    for _,fn in ipairs(themeUpdaters) do pcall(fn,t) end
+end
+
+local round_mod=nil
+local function get_round()
+    if round_mod then return round_mod end
+    local ok,m=pcall(function() return require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("CurrentRoundClient")) end)
+    if ok and type(m)=="table" then round_mod=m end
+    return round_mod
+end
+local function get_roles()
+    local out={}
+    local m=get_round(); local d=m and m.PlayerData
+    if type(d)=="table" then
+        for name,info in pairs(d) do
+            if type(info)=="table" and not info.Dead then out[name]=info.Role end
+        end
+    end
+    for _,p in ipairs(Players:GetPlayers()) do
+        local c=p.Character; local bp=p:FindFirstChildOfClass("Backpack")
+        local hasGun=(c and c:FindFirstChild("Gun")) or (bp and bp:FindFirstChild("Gun"))
+        local hasKnife=(c and c:FindFirstChild("Knife")) or (bp and bp:FindFirstChild("Knife"))
+        if hasGun and out[p.Name]~="Murderer" then out[p.Name]="Sheriff" end
+        if hasKnife then out[p.Name]="Murderer" end
+    end
+    return out
+end
+local function my_role()
+    local m=get_round(); local d=m and m.PlayerData; local me=d and d[LP.Name]
+    return me and me.Role or nil
+end
+local function holds(c,n) return c~=nil and c:FindFirstChild(n)~=nil end
+local function lp_has_gun() return holds(LP.Character,"Gun") or holds(LP:FindFirstChildOfClass("Backpack"),"Gun") end
+local function get_hrp() local c=LP.Character; return c and c:FindFirstChild("HumanoidRootPart") end
+local function has_knife()
+    local c=LP.Character
+    if c and c:FindFirstChild("Knife") then return true end
+    local bp=LP:FindFirstChildOfClass("Backpack")
+    if bp and bp:FindFirstChild("Knife") then return true end
+    return false
+end
+
+-- SILENT AIM
+local target_player,target_char,target_part,target_hum
+local function refresh_target()
+    local found=nil
+    local m=get_round(); local data=m and m.PlayerData or nil
+    if type(data)=="table" then
+        local me=data[LP.Name]
+        ST.am_sheriff=(me~=nil and (me.Role=="Sheriff" or me.Role=="Hero")) or lp_has_gun()
+        for name,d in pairs(data) do
+            if type(d)=="table" and d.Role=="Murderer" and not d.Dead then found=Players:FindFirstChild(name); break end
+        end
+    else ST.am_sheriff=lp_has_gun() end
+    if not found then
+        for _,plr in ipairs(Players:GetPlayers()) do
+            if plr~=LP and holds(plr.Character,"Knife") then found=plr; break end
+        end
+    end
+    if found~=target_player then target_player=found; target_char=nil; target_part=nil; target_hum=nil end
+    if not found then return end
+    local char=found.Character
+    if char~=target_char then target_char=char; target_part=nil; target_hum=nil end
+    if not char then return end
+    if not target_part or not target_part.Parent then
+        target_part=char:FindFirstChild(ST.hit_part) or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
+    end
+    if not target_hum or not target_hum.Parent then target_hum=char:FindFirstChildOfClass("Humanoid") end
+end
+local function target_alive()
+    if not target_part or not target_part.Parent then return false end
+    if not target_hum or not target_hum.Parent then return false end
+    return target_hum.Health>0
+end
+local hist={}
+local function push_hist(pos,t) table.insert(hist,1,{p=pos,t=t}); if #hist>12 then table.remove(hist) end end
+local function est_vel()
+    if #hist<3 then return Vector3.zero end
+    local n,o=hist[1],hist[#hist]; local dt=n.t-o.t
+    if dt<=0.001 then return Vector3.zero end
+    return (n.p-o.p)/dt
+end
+local function ping_sec()
+    local ok,ms=pcall(function() return Stats.Network.ServerStatsItem["Data Ping"]:GetValue() end)
+    if ok and type(ms)=="number" and ms>0 and ms<800 then return ms/1000 end
+    local ok2,p=pcall(function() return LP:GetNetworkPing() end)
+    if ok2 and type(p)=="number" then return p end
+    return 0.05
+end
+local ray=RaycastParams.new(); ray.FilterType=Enum.RaycastFilterType.Exclude; ray.IgnoreWater=true
+local function los_clear(origin,point)
+    if not origin or not point then return false end
+    local d=point-origin
+    if d.Magnitude<0.5 then return true end
+    ray.FilterDescendantsInstances={LP.Character}
+    local h=workspace:Raycast(origin,d,ray)
+    if not h then return true end
+    if target_char and (h.Instance==target_char or h.Instance:IsDescendantOf(target_char)) then return true end
+    return (h.Position-origin).Magnitude>=d.Magnitude-0.75
+end
+local function aim_point(origin,strict)
+    if not target_part or not target_part.Parent then return nil end
+    local base=target_part.Position
+    if ST.predict then
+        local v=est_vel(); local lead=ping_sec()+0.03
+        base=base+v*lead
+        local hrp=target_char and target_char:FindFirstChild("HumanoidRootPart")
+        if hrp and hrp.AssemblyLinearVelocity.Y<-5 then base=base+Vector3.new(0,-0.5*workspace.Gravity*lead*lead,0) end
+    end
+    if not origin then return base end
+    if los_clear(origin,base) then return base end
+    if strict then return nil end
+    for _,n in ipairs({"Head","HumanoidRootPart","UpperTorso","Torso"}) do
+        local p=target_char and target_char:FindFirstChild(n)
+        if p and los_clear(origin,p.Position) then return p.Position end
+    end
+    return base
+end
+local force_att,force_saved,force_stamp
+local function gun_att() local hrp=get_hrp(); return hrp and hrp:FindFirstChild("GunRaycastAttachment"),hrp end
+local function origin_cf()
+    local att,hrp=gun_att(); if att then return att.WorldCFrame end
+    if hrp then return hrp.CFrame end
+end
+local function restore_origin()
+    local att=force_att; if not att then return end
+    local s=force_saved; force_att,force_saved=nil,nil
+    if s then pcall(function() if att.Parent then att.CFrame=s end end) end
+end
+local function push_origin(cf)
+    local att=gun_att(); if not att then return false end
+    if force_att and force_att~=att then restore_origin() end
+    if not force_att then local ok,s=pcall(function() return att.CFrame end); if not ok then return false end; force_att,force_saved=att,s end
+    force_stamp=os.clock()
+    local ok=pcall(function() att.WorldCFrame=cf end)
+    if not ok then restore_origin() return false end
+    task.defer(restore_origin); return true
+end
+local function resolve_shot()
+    if not ST.silent or not target_alive() then return nil end
+    local cf=origin_cf(); local origin=cf and cf.Position or nil
+    local aim=aim_point(origin,false); if not aim then return nil end
+    if ST.force then
+        local dir=(aim-(origin or aim)).Unit
+        if dir.Magnitude>0 then
+            local back=aim-dir*ST.stand_off
+            if push_origin(CFrame.new(back,aim)) then return CFrame.new(aim) end
+        end
+    end
+    return CFrame.new(aim)
+end
+local weapon_service,orig_mouse,orig_screen,hook_mouse,hook_screen
+local function get_weapon_service()
+    if weapon_service then return weapon_service end
+    local ok,m=pcall(function() return require(ReplicatedStorage:WaitForChild("ClientServices"):WaitForChild("WeaponService")) end)
+    if ok and type(m)=="table" then weapon_service=m end
+    return weapon_service
+end
+local function install_hooks()
+    local m=get_weapon_service(); if not m then return end
+    if not hook_mouse then
+        hook_mouse=function(self,...) local ok,cf=pcall(resolve_shot); if ok and cf then return cf end; return orig_mouse(self,...) end
+        hook_screen=function(self,x,y,...) local ok,cf=pcall(resolve_shot); if ok and cf then return cf end; return orig_screen(self,x,y,...) end
+    end
+    pcall(function() setreadonly(m,false) end)
+    if type(m.GetMouseTargetCFrame)=="function" and m.GetMouseTargetCFrame~=hook_mouse then orig_mouse=m.GetMouseTargetCFrame; pcall(function() m.GetMouseTargetCFrame=hook_mouse end) end
+    if type(m.GetTargetPosition)=="function" and m.GetTargetPosition~=hook_screen then orig_screen=m.GetTargetPosition; pcall(function() m.GetTargetPosition=hook_screen end) end
+end
+local function get_gun()
+    local c=LP.Character
+    if c then local g=c:FindFirstChild("Gun") if g then return g,true end end
+    local bp=LP:FindFirstChildOfClass("Backpack")
+    if bp then local g=bp:FindFirstChild("Gun") if g then return g,false end end
+    return nil,false
+end
+local function fire_gun(gun,a,b)
+    if not gun or not a or not b then return false end
+    local r=gun:FindFirstChild("Shoot")
+    if not r or not r:IsA("RemoteEvent") then return false end
+    return pcall(function() r:FireServer(a,b) end)
+end
+local function auto_step(now)
+    if not ST.auto_shoot or not ST.silent or not ST.am_sheriff then return end
+    if getgenv().AUTOFARM_HOLD then return end
+    if not target_alive() then return end
+    local gun,eq=get_gun(); if not gun then return end
+    if not eq then local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum then pcall(function() hum:EquipTool(gun) end) end; return end
+    if now-ST.last_shot<math.max(ST.auto_delay,0) then return end
+    local cf=origin_cf(); if not cf then return end
+    local aim=aim_point(cf.Position,true); if not aim then return end
+    if ST.force then local dir=(aim-cf.Position).Unit; push_origin(CFrame.new(aim-dir*ST.stand_off,aim)) end
+    if fire_gun(gun,cf,CFrame.new(aim)) then ST.last_shot=now end
+end
+
+-- FOV CIRCLE
+local fovGui=Instance.new("ScreenGui")
+fovGui.Name="DaDaFOV_"..math.random(1000,9999)
+fovGui.ResetOnSpawn=false; fovGui.IgnoreGuiInset=true
+pcall(function() fovGui.Parent=CoreGui end)
+if not fovGui.Parent then fovGui.Parent=LP:WaitForChild("PlayerGui") end
+local fovCircle=Instance.new("Frame")
+fovCircle.AnchorPoint=Vector2.new(0.5,0.5); fovCircle.Position=UDim2.fromScale(0.5,0.5)
+fovCircle.BackgroundTransparency=1; fovCircle.Visible=false; fovCircle.Parent=fovGui
+Instance.new("UICorner",fovCircle).CornerRadius=UDim.new(1,0)
+local fovStroke=Instance.new("UIStroke",fovCircle); fovStroke.Color=ACCENT; fovStroke.Thickness=1.5
+table.insert(themeUpdaters,function(t) fovStroke.Color=t.Accent end)
+RunService.RenderStepped:Connect(function()
+    fovCircle.Visible=ST.fov_circle and ST.silent
+    fovCircle.Size=UDim2.fromOffset(ST.fov_size*2,ST.fov_size*2)
+end)
+
+-- TRIGGER BOT
+local last_trig=0
+local function triggerbot_step()
+    if not ST.triggerbot or not ST.am_sheriff then return end
+    if not target_alive() or not target_part then return end
+    local mouse=UIS:GetMouseLocation()
+    local cam=workspace.CurrentCamera; if not cam then return end
+    local sp,on=cam:WorldToViewportPoint(target_part.Position)
+    if not on then return end
+    if (Vector2.new(sp.X,sp.Y)-mouse).Magnitude<=ST.fov_size and os.clock()-last_trig>0.05 then
+        last_trig=os.clock()
+        local gun,eq=get_gun()
+        if gun and eq then local cf=origin_cf(); if cf then fire_gun(gun,cf,CFrame.new(target_part.Position)) end end
+    end
+end
+
+-- KNIFE AUTO THROW
+local last_knife=0
+local function knife_silent_step()
+    if not ST.auto_knife_throw then return end
+    if my_role()~="Murderer" then return end
+    if os.clock()-last_knife<0.1 then return end
+    local k=LP.Character and LP.Character:FindFirstChild("Knife"); if not k then return end
+    local my=get_hrp(); if not my then return end
+    local best,bd=nil,math.huge
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LP and p.Character then
+            local hum=p.Character:FindFirstChildOfClass("Humanoid")
+            local hrp=p.Character:FindFirstChild("HumanoidRootPart")
+            if hum and hrp and hum.Health>0 then local d=(hrp.Position-my.Position).Magnitude; if d<bd then bd=d; best=hrp end end
+        end
+    end
+    if best then
+        last_knife=os.clock()
+        local events=k:FindFirstChild("Events"); local throw=events and events:FindFirstChild("ThrowKnife")
+        if throw then
+            local lead=best.Position
+            if ST.knife_predict then local v=best.AssemblyLinearVelocity; lead=lead+v*(ping_sec()+0.05)*(ST.knife_lead/100) end
+            pcall(function() throw:FireServer(CFrame.new(lead)) end)
+        end
+    end
+end
+
+-- AUTO GET GUN
+local function find_gun_drop()
+    for _,o in ipairs(workspace:GetDescendants()) do if o.Name=="GunDrop" and o:IsA("BasePart") then return o end end
+    return nil
+end
+local function grab_touch(hrp,gun) pcall(function() if firetouchinterest then firetouchinterest(hrp,gun,0); firetouchinterest(hrp,gun,1) else gun.CFrame=hrp.CFrame end end) end
+local function grab_teleport(hrp,gun) pcall(function() gun.CFrame=hrp.CFrame end) end
+local function grab_player_tp(hrp,gun)
+    if my_role()=="Murderer" then return end
+    if ST.teleporting then return end
+    ST.teleporting=true
+    task.spawn(function()
+        local old=hrp.CFrame
+        pcall(function() hrp.CFrame=gun.CFrame; task.wait(0.08); local h=get_hrp(); if h and ST.getgun_tp_back then h.CFrame=old end end)
+        task.wait(0.2); ST.teleporting=false
+    end)
+end
+local function grab_prompt(gun)
+    if has_knife() then return end
+    if not my_role() then return end
+    local hrp=get_hrp(); if not hrp then return end
+    pcall(function() gun.CFrame=hrp.CFrame end)
+    local p=gun:FindFirstChildOfClass("ProximityPrompt")
+    if p and fireproximityprompt then pcall(function() fireproximityprompt(p) end) end
+end
+local function getgun_step(now)
+    if not ST.getgun then return end
+    if now-ST.getgun_last<ST.getgun_interval then return end
+    ST.getgun_last=now
+    local hrp=get_hrp(); if not hrp then return end
+    local gun=find_gun_drop(); if not gun then return end
+    if ST.getgun_mode=="Touch" then grab_touch(hrp,gun)
+    elseif ST.getgun_mode=="Teleport" then grab_teleport(hrp,gun)
+    elseif ST.getgun_mode=="PlayerTP" then grab_player_tp(hrp,gun)
+    elseif ST.getgun_mode=="AutoGrab" then grab_prompt(gun) end
+end
+
+-- ESP
+local esp_cache={}
+local SKEL_R6={{"Head","Torso"},{"Torso","Left Arm"},{"Torso","Right Arm"},{"Torso","Left Leg"},{"Torso","Right Leg"}}
+local SKEL_R15={{"Head","UpperTorso"},{"UpperTorso","LowerTorso"},{"UpperTorso","LeftUpperArm"},{"LeftUpperArm","LeftLowerArm"},{"LeftLowerArm","LeftHand"},{"UpperTorso","RightUpperArm"},{"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"},{"LowerTorso","LeftUpperLeg"},{"LeftUpperLeg","LeftLowerLeg"},{"LeftLowerLeg","LeftFoot"},{"LowerTorso","RightUpperLeg"},{"RightUpperLeg","RightLowerLeg"},{"RightLowerLeg","RightFoot"}}
+local function make_esp()
+    local d={Box=Drawing.new("Square"),Name=Drawing.new("Text"),Dist=Drawing.new("Text"),HealthBg=Drawing.new("Square"),HealthBar=Drawing.new("Square"),Line=Drawing.new("Line"),Skel={},Flag=Drawing.new("Text")}
+    d.Box.Filled=false; d.Box.Thickness=1.5
+    d.Name.Center=true; d.Name.Outline=true; d.Name.Size=14
+    d.Dist.Center=true; d.Dist.Outline=true; d.Dist.Size=12
+    d.HealthBg.Filled=true; d.HealthBg.Color=Color3.new(0,0,0); d.HealthBg.Thickness=0
+    d.HealthBar.Filled=true; d.HealthBar.Thickness=0
+    d.Flag.Center=true; d.Flag.Outline=true; d.Flag.Size=11
+    for i=1,20 do local l=Drawing.new("Line"); l.Thickness=1; l.Transparency=1; d.Skel[i]=l end
+    return d
+end
+local function remove_esp(d)
+    for k,v in pairs(d) do
+        if type(v)=="table" then for _,l in ipairs(v) do pcall(function() l:Remove() end) end
+        else pcall(function() v:Remove() end) end
+    end
+end
+local function clear_highlights()
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p.Character then local h=p.Character:FindFirstChild("DaDaChams"); if h then pcall(function() h:Destroy() end) end end
+    end
+end
+local function update_highlights(roles)
+    if not (ST.esp_on and ST.esp_chams) then clear_highlights(); return end
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LP and p.Character then
+            local role=roles[p.Name]; local col
+            if ST.esp_chams_roles then
+                col = role=="Murderer" and Color3.fromRGB(255,90,90) or (role=="Sheriff" or role=="Hero") and Color3.fromRGB(90,160,255) or Color3.fromRGB(230,230,240)
+            else col=ST.esp_box_col end
+            local h=p.Character:FindFirstChild("DaDaChams")
+            if not h then h=Instance.new("Highlight"); h.Name="DaDaChams"; h.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop; h.Parent=p.Character end
+            h.FillColor=col; h.OutlineColor=col; h.FillTransparency=0.5; h.OutlineTransparency=0; h.Enabled=true
+        end
+    end
+end
+local function esp_step()
+    if not ST.esp_on then for plr,d in pairs(esp_cache) do remove_esp(d); esp_cache[plr]=nil end; clear_highlights(); return end
+    local cam=workspace.CurrentCamera; if not cam then return end
+    local roles=get_roles(); update_highlights(roles)
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr~=LP and plr.Character then
+            local char=plr.Character
+            local hrp=char:FindFirstChild("HumanoidRootPart")
+            local hum=char:FindFirstChildOfClass("Humanoid")
+            if hrp and hum and hum.Health>0 then
+                local dist=(hrp.Position-cam.CFrame.Position).Magnitude
+                local d=esp_cache[plr]; if not d then d=make_esp(); esp_cache[plr]=d end
+                if dist>ST.esp_max_dist then
+                    for k,v in pairs(d) do if type(v)=="table" then for _,l in ipairs(v) do l.Visible=false end else v.Visible=false end end
+                else
+                    local cf=hrp.CFrame
+                    local corners={Vector3.new(-2,2.75,-1),Vector3.new(2,2.75,-1),Vector3.new(-2,-2.75,-1),Vector3.new(2,-2.75,-1),Vector3.new(-2,2.75,1),Vector3.new(2,2.75,1),Vector3.new(-2,-2.75,1),Vector3.new(2,-2.75,1)}
+                    local minX,minY=math.huge,math.huge; local maxX,maxY=-math.huge,-math.huge
+                    local valid=true
+                    for _,o in ipairs(corners) do
+                        local vp,on=cam:WorldToViewportPoint((cf*CFrame.new(o)).Position)
+                        if vp.Z<=0 then valid=false break end
+                        if on then minX=math.min(minX,vp.X); minY=math.min(minY,vp.Y); maxX=math.max(maxX,vp.X); maxY=math.max(maxY,vp.Y) end
+                    end
+                    if valid and minX<maxX and minY<maxY then
+                        local bw=maxX-minX; local bh=maxY-minY
+                        d.Box.Size=Vector2.new(bw,bh); d.Box.Position=Vector2.new(minX,minY); d.Box.Color=ST.esp_box_col; d.Box.Visible=ST.esp_box
+                        d.Name.Text=plr.Name; d.Name.Position=Vector2.new(minX+bw/2,minY-16); d.Name.Color=ST.esp_name_col; d.Name.Visible=ST.esp_name
+                        d.Dist.Text=string.format("%dm",math.floor(dist)); d.Dist.Position=Vector2.new(minX+bw/2,maxY+2); d.Dist.Color=ST.esp_dist_col; d.Dist.Visible=ST.esp_dist
+                        local hf=hum.Health/hum.MaxHealth
+                        d.HealthBg.Size=Vector2.new(3,bh); d.HealthBg.Position=Vector2.new(minX-6,minY); d.HealthBg.Visible=ST.esp_health
+                        d.HealthBar.Size=Vector2.new(3,bh*hf); d.HealthBar.Position=Vector2.new(minX-6,minY+bh*(1-hf)); d.HealthBar.Color=Color3.fromRGB(255*(1-hf),255*hf,0); d.HealthBar.Visible=ST.esp_health
+                        if ST.esp_line then d.Line.From=Vector2.new(cam.ViewportSize.X/2,cam.ViewportSize.Y); d.Line.To=Vector2.new(minX+bw/2,maxY); d.Line.Color=ST.esp_box_col; d.Line.Thickness=1; d.Line.Visible=true else d.Line.Visible=false end
+                        if ST.esp_skel then
+                            local isR15=char:FindFirstChild("UpperTorso")~=nil
+                            local skel=isR15 and SKEL_R15 or SKEL_R6
+                            for i=1,#d.Skel do d.Skel[i].Visible=false end
+                            for i,pair in ipairs(skel) do
+                                local a=char:FindFirstChild(pair[1]); local b=char:FindFirstChild(pair[2])
+                                if a and b then
+                                    local ap,aon=cam:WorldToViewportPoint(a.Position); local bp,bon=cam:WorldToViewportPoint(b.Position)
+                                    if aon and bon then local l=d.Skel[i]; l.From=Vector2.new(ap.X,ap.Y); l.To=Vector2.new(bp.X,bp.Y); l.Color=ST.esp_skel_col; l.Visible=true end
+                                end
+                            end
+                        else for i=1,#d.Skel do d.Skel[i].Visible=false end end
+                    else
+                        for k,v in pairs(d) do if type(v)=="table" then for _,l in ipairs(v) do l.Visible=false end else v.Visible=false end end
+                    end
+                end
+            elseif esp_cache[plr] then remove_esp(esp_cache[plr]); esp_cache[plr]=nil end
+        end
+    end
+end
+
+-- AUTO FARM
+local farm_cfg={on=false,mode="Basic",avoid_murder=false,auto_reset=false,speed=23,down_depth=14,avoid_dist=40,rise_safe_dist=20}
+local nc_cache={}; local was_down=false; local down_ref_y=nil; local last_touch=0
+local farm_target=nil; local collected_ids={}; local collected_count=0; local coins_done=false; local saw_coins=false
+getgenv().AUTOFARM_HOLD=false
+local function farm_hrp() local c=LP.Character; return c and c:FindFirstChild("HumanoidRootPart") end
+local function get_round_data() local m=get_round(); return m and m.PlayerData end
+local function can_farm()
+    local char=LP.Character; local hum=char and char:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health<=0 then return false end
+    local d=get_round_data()
+    if type(d)=="table" then local me=d[LP.Name]; if not me or not me.Role or me.Dead then return false end end
+    return true
+end
+local function coin_bags_full()
+    local pg=LP:FindFirstChild("PlayerGui"); local main=pg and pg:FindFirstChild("MainGUI"); local gg=main and main:FindFirstChild("Game")
+    local bags=gg and gg:FindFirstChild("CoinBags"); local container=bags and bags:FindFirstChild("Container")
+    if not container then return false end
+    local any=false
+    for _,v in ipairs(container:GetChildren()) do if v:IsA("Frame") and v.Visible then any=true; local full=v:FindFirstChild("Full"); if not (full and full.Visible) then return false end end end
+    return any
+end
+local function coin_available(v) return v and v.Parent and v:IsA("BasePart") and not v:GetAttribute("Collected") and not v:GetAttribute("Delete") end
+local function nearest_coin(pos,list) local best,bd=nil,math.huge; for _,v in ipairs(list) do local d=(v.Position-pos).Magnitude; if d<bd then bd=d; best=v end end; return best end
+local function set_farm_noclip(on)
+    local char=LP.Character; local hum=char and char:FindFirstChildOfClass("Humanoid")
+    if on then
+        if not char then return end
+        if hum then pcall(function() hum.PlatformStand=true end) end
+        for _,p in ipairs(char:GetDescendants()) do if p:IsA("BasePart") and p.CanCollide then if nc_cache[p]==nil then nc_cache[p]=p.CanCollide end; p.CanCollide=false end end
+    else
+        if hum then pcall(function() hum.PlatformStand=false end) end
+        for p,v in pairs(nc_cache) do if p and p.Parent then pcall(function() p.CanCollide=v end) end end
+        nc_cache={}
+    end
+end
+local up_params=RaycastParams.new(); up_params.FilterType=Enum.RaycastFilterType.Exclude; up_params.IgnoreWater=true
+local function return_to_surface()
+    local hrp=farm_hrp(); if not hrp then return end
+    local origin=hrp.Position; up_params.FilterDescendantsInstances={LP.Character}
+    local res=workspace:Raycast(origin,Vector3.new(0,400,0),up_params)
+    local y=res and (res.Position.Y+5) or (down_ref_y and down_ref_y+5 or nil)
+    if not y then return end
+    pcall(function() hrp.CFrame=CFrame.new(origin.X,y,origin.Z); hrp.AssemblyLinearVelocity=Vector3.zero; hrp.AssemblyAngularVelocity=Vector3.zero end)
+end
+local function farm_release() if was_down then was_down=false; return_to_surface() end; set_farm_noclip(false) end
+local murder_hrp_cache,murder_hrp_t=nil,0
+local function murderer_hrp()
+    local now=os.clock(); if now-murder_hrp_t<0.25 then return murder_hrp_cache end
+    murder_hrp_t=now; murder_hrp_cache=nil
+    local d=get_round_data()
+    if type(d)=="table" then
+        local me=d[LP.Name]; if me and me.Role=="Murderer" then return nil end
+        for name,info in pairs(d) do
+            if type(info)=="table" and info.Role=="Murderer" and not info.Dead and name~=LP.Name then
+                local pl=Players:FindFirstChild(name); local char=pl and pl.Character
+                local h=char and char:FindFirstChild("HumanoidRootPart"); local hum=char and char:FindFirstChildOfClass("Humanoid")
+                if h and (not hum or hum.Health>0) then murder_hrp_cache=h end
+                break
+            end
+        end
+    end
+    return murder_hrp_cache
+end
+local function flat_dist(a,b) return Vector3.new(a.X-b.X,0,a.Z-b.Z).Magnitude end
+local function pick_coin(pos,list,mpos)
+    if not (farm_cfg.avoid_murder and mpos) then return nearest_coin(pos,list) end
+    local safe,sd=nil,math.huge; local far,fd=nil,-1
+    for _,v in ipairs(list) do
+        local md=flat_dist(v.Position,mpos)
+        if md>fd then fd=md; far=v end
+        if md>=farm_cfg.avoid_dist then local d=(v.Position-pos).Magnitude; if d<sd then sd=d; safe=v end end
+    end
+    if safe then return safe end
+    if far and fd>=farm_cfg.avoid_dist*0.6 then return far end
+    return nil
+end
+local function coin_ok_now(v,mpos)
+    if not coin_available(v) then return false end
+    if farm_cfg.avoid_murder and mpos and flat_dist(v.Position,mpos)<farm_cfg.avoid_dist*0.6 then return false end
+    return true
+end
+local function avoid_steer(cur,dest,mpos)
+    if not (farm_cfg.avoid_murder and mpos) then return dest end
+    local dm=flat_dist(cur,mpos); if dm>=farm_cfg.avoid_dist then return dest end
+    local away=Vector3.new(cur.X-mpos.X,0,cur.Z-mpos.Z); if away.Magnitude<0.1 then away=Vector3.new(1,0,0) end; away=away.Unit
+    local want=Vector3.new(dest.X-cur.X,0,dest.Z-cur.Z); local mag=want.Magnitude; if mag<0.1 then return dest end
+    local weight=1+(1-dm/farm_cfg.avoid_dist)*2; local blend=(want.Unit+away*weight)
+    if blend.Magnitude<0.1 then blend=away else blend=blend.Unit end
+    local np=cur+blend*mag
+    return Vector3.new(np.X,dest.Y,np.Z)
+end
+local function touch_targets(coin)
+    local list,seen={},{}
+    local function add(p) if p and not seen[p] and p:IsA("BasePart") and p:FindFirstChildOfClass("TouchTransmitter") then seen[p]=true; list[#list+1]=p end end
+    add(coin); for _,v in ipairs(coin:GetChildren()) do add(v) end
+    local par=coin.Parent
+    if par then if par:IsA("BasePart") then add(par) end; for _,v in ipairs(par:GetChildren()) do add(v) end end
+    if #list==0 then list[1]=coin end
+    return list
+end
+local function fire_touch(coin)
+    if type(firetouchinterest)~="function" then return end
+    if not coin or not coin.Parent then return end
+    local now=os.clock(); if now-last_touch<0.05 then return end; last_touch=now
+    local hrp=farm_hrp(); if not hrp then return end
+    for _,p in ipairs(touch_targets(coin)) do pcall(firetouchinterest,hrp,p,0); pcall(firetouchinterest,hrp,p,1) end
+end
+local function farm_move(hrp,dest,dt)
+    local dir=dest-hrp.Position; local dist=dir.Magnitude; local np=dest
+    if dist>0.1 then np=hrp.Position+dir.Unit*math.min(farm_cfg.speed*dt,dist) end
+    local cf=CFrame.new(np)
+    if farm_cfg.mode=="Down" then cf=cf*CFrame.Angles(-math.pi*0.5,0,0); was_down=true end
+    pcall(function() hrp.CFrame=cf; hrp.AssemblyLinearVelocity=Vector3.zero; hrp.AssemblyAngularVelocity=Vector3.zero end)
+end
+local function farm_step(_,dt)
+    if not farm_cfg.on then return end
+    if not can_farm() then farm_target=nil; was_down=false; set_farm_noclip(false); return end
+    local hrp=farm_hrp(); if not hrp then return end
+    local list={}
+    for _,v in ipairs(CollectionService:GetTagged("CoinVisual")) do
+        if v and v.Parent and v:IsA("BasePart") then
+            if v:GetAttribute("Collected") then local id=v:GetAttribute("CoinID"); if id and not collected_ids[id] then collected_ids[id]=true; collected_count=collected_count+1 end
+            elseif not v:GetAttribute("Delete") then list[#list+1]=v end
+        end
+    end
+    local function finish()
+        farm_target=nil; farm_release()
+        if not coins_done then coins_done=true; getgenv().AUTOFARM_HOLD=false; if farm_cfg.auto_reset then local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum then pcall(function() hum.Health=0 end) end end end
+    end
+    if saw_coins and coin_bags_full() then finish() return end
+    if #list>0 then
+        saw_coins=true; if coins_done then coins_done=false end
+        local mhrp=farm_cfg.avoid_murder and murderer_hrp() or nil; local mpos=mhrp and mhrp.Position or nil
+        if not coin_ok_now(farm_target,mpos) then farm_target=pick_coin(hrp.Position,list,mpos) end
+        if farm_target then
+            set_farm_noclip(true)
+            local cpos=farm_target.Position; down_ref_y=cpos.Y; local dest=cpos
+            if farm_cfg.mode=="Down" then
+                local xz=flat_dist(hrp.Position,cpos)
+                local safe_rise=(not mpos) or flat_dist(hrp.Position,mpos)>farm_cfg.rise_safe_dist
+                if xz<=4 and safe_rise then dest=cpos; fire_touch(farm_target) else dest=Vector3.new(cpos.X,cpos.Y-farm_cfg.down_depth,cpos.Z) end
+            elseif (cpos-hrp.Position).Magnitude<=6 then fire_touch(farm_target) end
+            dest=avoid_steer(hrp.Position,dest,mpos)
+            farm_move(hrp,dest,dt)
+        elseif mpos then
+            set_farm_noclip(true)
+            local away=Vector3.new(hrp.Position.X-mpos.X,0,hrp.Position.Z-mpos.Z); if away.Magnitude<0.1 then away=Vector3.new(1,0,0) end; away=away.Unit
+            local y=hrp.Position.Y; if farm_cfg.mode=="Down" and down_ref_y then y=down_ref_y-farm_cfg.down_depth end
+            farm_move(hrp,hrp.Position+away*40+Vector3.new(0,y-hrp.Position.Y,0),dt)
+        end
+    else
+        farm_target=nil; farm_release()
+        if saw_coins and not coins_done and collected_count>0 then finish() end
+    end
+end
+local farm_conn=RunService.Stepped:Connect(farm_step)
+
+-- ANTI-FLING
+local af_cache={}
+local function antifling_step()
+    if not ST.antifling then for p,v in pairs(af_cache) do if p.Parent then pcall(function() p.CanCollide=v end) end end; af_cache={}; return end
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LP and p.Character then
+            for _,part in ipairs(p.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    if af_cache[part]==nil then af_cache[part]=part.CanCollide end
+                    if part.CanCollide then part.CanCollide=false end
+                    pcall(function() part.CustomPhysicalProperties=PhysicalProperties.new(0,0,0,0,0) end)
+                end
+            end
+        end
+    end
+end
+
+-- FLING
+local function do_fling(tp)
+    if not tp or not tp.Character then return end
+    local hrp=get_hrp(); local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+    if not hrp then return end
+    local tc=tp.Character; local thrp=tc:FindFirstChild("HumanoidRootPart") or tc:FindFirstChild("Head")
+    local th=tc:FindFirstChildOfClass("Humanoid")
+    if not thrp then return end
+    getgenv().FLING_ACTIVE=(getgenv().FLING_ACTIVE or 0)+1
+    if hrp.Velocity.Magnitude<50 then getgenv().OldPos=hrp.CFrame end
+    if th and th.Sit then getgenv().FLING_ACTIVE=math.max(0,(getgenv().FLING_ACTIVE or 1)-1) return end
+    local camera=workspace.CurrentCamera; local old_fdh=workspace.FallenPartsDestroyHeight
+    if thrp then camera.CameraSubject=thrp elseif th then camera.CameraSubject=th end
+    pcall(function() workspace.FallenPartsDestroyHeight=0/0 end)
+    local bv=Instance.new("BodyVelocity"); bv.Parent=hrp; bv.Velocity=Vector3.new(0,0,0); bv.MaxForce=Vector3.new(9e9,9e9,9e9)
+    local se=hum and hum:GetStateEnabled(Enum.HumanoidStateType.Seated)
+    if hum then hum:SetStateEnabled(Enum.HumanoidStateType.Seated,false) end
+    local tw=2; local tm=tick()
+    repeat
+        if hrp and th then
+            hrp.CFrame=CFrame.new(thrp.Position)*CFrame.new(0,1.5,0)
+            hrp.Velocity=Vector3.new(9e7,9e8,9e7); hrp.RotVelocity=Vector3.new(9e8,9e8,9e8)
+            task.wait()
+        end
+    until tm+tw<tick() or not (ST.fling_murder or ST.fling_sheriff)
+    if bv then bv:Destroy() end
+    if hum and se~=nil then hum:SetStateEnabled(Enum.HumanoidStateType.Seated,se) end
+    camera.CameraSubject=hum
+    if getgenv().OldPos and hrp then hrp.CFrame=getgenv().OldPos; if hum then hum:ChangeState("GettingUp") end; pcall(function() workspace.FallenPartsDestroyHeight=old_fdh end) end
+    getgenv().FLING_ACTIVE=math.max(0,(getgenv().FLING_ACTIVE or 1)-1)
+end
+local fling_thread=nil
+local function fling_loop()
+    if fling_thread then return end
+    fling_thread=task.spawn(function()
+        while ST.fling_murder or ST.fling_sheriff do
+            local target=nil; local roles=get_roles()
+            if ST.fling_murder then for name,role in pairs(roles) do if role=="Murderer" then target=Players:FindFirstChild(name); break end end end
+            if not target and ST.fling_sheriff then for name,role in pairs(roles) do if role=="Sheriff" or role=="Hero" then target=Players:FindFirstChild(name); break end end end
+            if target and target.Character and get_hrp() then do_fling(target) else task.wait(0.3) end
+            task.wait()
+        end
+        fling_thread=nil
+    end)
+end
+
+-- KILL AURA / AUTO KNIFE
+local function get_knife()
+    local char=LP.Character
+    if char then local k=char:FindFirstChild("Knife") if k then return k,true end end
+    local bp=LP:FindFirstChildOfClass("Backpack")
+    if bp then local k=bp:FindFirstChild("Knife") if k then return k,false end end
+    return nil,false
+end
+local function ensure_knife()
+    local k,eq=get_knife(); if not k then return nil end
+    if not eq then local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum then pcall(function() hum:EquipTool(k) end) end; return nil end
+    return k
+end
+local function knife_stab(k) local ev=k:FindFirstChild("Events"); local s=ev and ev:FindFirstChild("KnifeStabbed"); if s then pcall(function() s:FireServer() end) end end
+local function knife_touch(k,part) local ev=k:FindFirstChild("Events"); local t=ev and ev:FindFirstChild("HandleTouched"); if t then pcall(function() t:FireServer(part) end) end end
+local last_ka=0
+local function killaura_step()
+    if not (ST.killaura or ST.autoknife) then return end
+    if my_role()~="Murderer" then return end
+    if os.clock()-last_ka<0.05 then return end
+    local k=ensure_knife(); if not k then return end
+    local my_hrp=get_hrp(); if not my_hrp then return end
+    local victims={}
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=LP and p.Character then
+            local hum=p.Character:FindFirstChildOfClass("Humanoid")
+            local part=p.Character:FindFirstChild("HumanoidRootPart") or p.Character:FindFirstChild("Head")
+            if hum and hum.Health>0 and part then
+                if ST.autoknife then victims[#victims+1]=part
+                elseif ST.killaura and (part.Position-my_hrp.Position).Magnitude<=ST.killaura_dist then victims[#victims+1]=part end
+            end
+        end
+    end
+    if #victims>0 then knife_stab(k); for _,part in ipairs(victims) do knife_touch(k,part) end; last_ka=os.clock() end
+end
+
+-- MODEL CHANGER
+local model_inst=nil
+local function set_model(id)
+    if model_inst then pcall(function() model_inst:Destroy() end) model_inst=nil end
+    if not ST.model_on or id=="" then return end
+    local num=tonumber(id) or tonumber((tostring(id):gsub("%D","")))
+    if not num then return end
+    task.spawn(function()
+        local ok,objs=pcall(function() return game:GetObjects("rbxassetid://"..num) end)
+        if not ok or type(objs)~="table" then return end
+        for _,obj in ipairs(objs) do
+            if obj:IsA("Model") or obj:IsA("BasePart") then
+                for _,d in ipairs(obj:GetDescendants()) do
+                    if d:IsA("BasePart") then d.Anchored=false; d.CanCollide=false; d.CanQuery=false; d.Massless=true end
+                end
+                local char=LP.Character; local hrp=char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then if obj:IsA("Model") then obj:PivotTo(hrp.CFrame) else obj.CFrame=hrp.CFrame end; obj.Parent=workspace; model_inst=obj end
+                break
+            end
+        end
+    end)
+end
+
+-- 20 ФИЧ
+local flyBody=Instance.new("BodyVelocity"); flyBody.MaxForce=Vector3.new(9e9,9e9,9e9)
+local flyGyro=Instance.new("BodyGyro"); flyGyro.MaxTorque=Vector3.new(9e9,9e9,9e9); flyGyro.P=1000
+RunService.Heartbeat:Connect(function()
+    if not ST.fly then if flyBody.Parent then flyBody.Parent=nil end; if flyGyro.Parent then flyGyro.Parent=nil end; return end
+    local hrp=get_hrp(); if not hrp then return end
+    if flyBody.Parent~=hrp then flyBody.Parent=hrp; flyGyro.Parent=hrp end
+    local cam=workspace.CurrentCamera; local mv=Vector3.zero
+    if UIS:IsKeyDown(Enum.KeyCode.W) then mv=mv+cam.CFrame.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.S) then mv=mv-cam.CFrame.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.A) then mv=mv-cam.CFrame.RightVector end
+    if UIS:IsKeyDown(Enum.KeyCode.D) then mv=mv+cam.CFrame.RightVector end
+    if UIS:IsKeyDown(Enum.KeyCode.Space) then mv=mv+Vector3.new(0,1,0) end
+    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then mv=mv-Vector3.new(0,1,0) end
+    if mv.Magnitude>0 then mv=mv.Unit*ST.fly_speed end
+    flyBody.Velocity=mv; flyGyro.CFrame=cam.CFrame
+end)
+local nocache={}
+RunService.Stepped:Connect(function()
+    if not ST.noclip then for p,v in pairs(nocache) do if p.Parent then p.CanCollide=v end end; nocache={}; return end
+    local char=LP.Character; if not char then return end
+    for _,p in ipairs(char:GetDescendants()) do if p:IsA("BasePart") then if nocache[p]==nil then nocache[p]=p.CanCollide end; if p.CanCollide then p.CanCollide=false end end end
+end)
+UIS.JumpRequest:Connect(function() if ST.inf_jump then local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end end end)
+RunService.Stepped:Connect(function() if ST.speed_hack then local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum and hum.WalkSpeed~=ST.speed_val then hum.WalkSpeed=ST.speed_val end end end)
+RunService.Stepped:Connect(function() if ST.jump_power then local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum then if not hum.UseJumpPower then hum.UseJumpPower=true end; if hum.JumpPower~=ST.jump_val then hum.JumpPower=ST.jump_val end end end end)
+local last_wh=0
+UIS.JumpRequest:Connect(function()
+    if not ST.wallhop then return end
+    if os.clock()-last_wh<0.1 then return end
+    local hrp=get_hrp(); local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if not hrp or not hum then return end
+    if hum.FloorMaterial~=Enum.Material.Air then return end
+    local params=RaycastParams.new(); params.FilterType=Enum.RaycastFilterType.Exclude; params.FilterDescendantsInstances={LP.Character}
+    for _,d in ipairs({Vector3.new(1,0,0),Vector3.new(-1,0,0),Vector3.new(0,0,1),Vector3.new(0,0,-1)}) do
+        if workspace:Raycast(hrp.Position,d*3,params) then hum:ChangeState(Enum.HumanoidStateType.Jumping); last_wh=os.clock(); return end
+    end
+end)
+UIS.JumpRequest:Connect(function() if not ST.bhop then return end; local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum then hum.Jump=true end end)
+local orig_grav=workspace.Gravity
+RunService.Stepped:Connect(function() if ST.gravity then if workspace.Gravity~=ST.gravity_val then workspace.Gravity=ST.gravity_val end elseif workspace.Gravity~=orig_grav then workspace.Gravity=orig_grav end end)
+local fb_orig={Brightness=Lighting.Brightness,ClockTime=Lighting.ClockTime,GlobalShadows=Lighting.GlobalShadows,OutdoorAmbient=Lighting.OutdoorAmbient}
+RunService.Stepped:Connect(function()
+    if ST.fullbright then Lighting.Brightness=3; Lighting.ClockTime=14; Lighting.GlobalShadows=false; Lighting.OutdoorAmbient=Color3.fromRGB(200,200,200)
+    else
+        if Lighting.Brightness~=fb_orig.Brightness then Lighting.Brightness=fb_orig.Brightness end
+        if Lighting.ClockTime~=fb_orig.ClockTime then Lighting.ClockTime=fb_orig.ClockTime end
+        if Lighting.GlobalShadows~=fb_orig.GlobalShadows then Lighting.GlobalShadows=fb_orig.GlobalShadows end
+        if Lighting.OutdoorAmbient~=fb_orig.OutdoorAmbient then Lighting.OutdoorAmbient=fb_orig.OutdoorAmbient end
+    end
+end)
+local first_fov=true; local orig_fov=70
+RunService.RenderStepped:Connect(function()
+    local c=workspace.CurrentCamera; if not c then return end
+    if first_fov then orig_fov=c.FieldOfView; first_fov=false end
+    if ST.fov_changer then if c.FieldOfView~=ST.fov_value then c.FieldOfView=ST.fov_value end
+    elseif c.FieldOfView~=orig_fov then c.FieldOfView=orig_fov end
+end)
+local orig_amb=Lighting.Ambient
+RunService.Stepped:Connect(function()
+    if ST.world_color then Lighting.Ambient=ST.world_color_val; Lighting.OutdoorAmbient=ST.world_color_val
+    elseif Lighting.Ambient~=orig_amb then Lighting.Ambient=orig_amb; Lighting.OutdoorAmbient=fb_orig.OutdoorAmbient end
+end)
+local current_sky=nil
+local SKYBOXES={
+    ["Default"]=nil,
+    ["Space"]={Bk="rbxassetid://166509999",Dn="rbxassetid://166510057",Ft="rbxassetid://166510116",Lf="rbxassetid://166510092",Rt="rbxassetid://166510131",Up="rbxassetid://166510114"},
+    ["Red"]={Bk="rbxassetid://401664839",Dn="rbxassetid://401664862",Ft="rbxassetid://401664960",Lf="rbxassetid://401664881",Rt="rbxassetid://401664901",Up="rbxassetid://401664936"},
+    ["Purple"]={Bk="rbxassetid://13694952867",Dn="rbxassetid://13694968325",Ft="rbxassetid://13694980654",Lf="rbxassetid://13694998113",Rt="rbxassetid://13695002700",Up="rbxassetid://13695007103"},
+}
+local function apply_skybox(name)
+    if current_sky then current_sky:Destroy() current_sky=nil end
+    local def=SKYBOXES[name]; if not def then return end
+    local sky=Instance.new("Sky")
+    for k,v in pairs(def) do pcall(function() sky[k]=v end) end
+    sky.Parent=Lighting; current_sky=sky
+end
+RunService.Stepped:Connect(function()
+    local char=LP.Character; if not char then return end
+    for _,p in ipairs(char:GetDescendants()) do
+        if p:IsA("BasePart") and p.Name~="HumanoidRootPart" then
+            if ST.char_transparency then p.LocalTransparencyModifier=ST.char_trans_val else p.LocalTransparencyModifier=0 end
+        end
+    end
+end)
+RunService.Stepped:Connect(function()
+    local char=LP.Character; if not char then return end
+    local head=char:FindFirstChild("Head"); if not head then return end
+    if ST.fake_headless then
+        head.Transparency=1
+        for _,d in ipairs(head:GetChildren()) do if d:IsA("Decal") or d:IsA("SpecialMesh") then pcall(function() d.Transparency=1 end) end end
+    else
+        head.Transparency=0
+        for _,d in ipairs(head:GetChildren()) do if d:IsA("Decal") or d:IsA("SpecialMesh") then pcall(function() d.Transparency=0 end) end end
+    end
+end)
+local korblox_saved={}
+RunService.Stepped:Connect(function()
+    local char=LP.Character; if not char then return end
+    local rl=char:FindFirstChild("RightLowerLeg"); local rf=char:FindFirstChild("RightFoot")
+    if not rl or not rf then return end
+    if ST.fake_korblox then
+        if not korblox_saved.rl then korblox_saved.rl=rl.MeshId end
+        if not korblox_saved.rf then korblox_saved.rf=rf.MeshId end
+        pcall(function() rl.MeshId="rbxassetid://902942093"; rf.MeshId="rbxassetid://902942089" end)
+    elseif korblox_saved.rl then
+        pcall(function() rl.MeshId=korblox_saved.rl; rf.MeshId=korblox_saved.rf end)
+    end
+end)
+UIS.InputBegan:Connect(function(input,gpe)
+    if gpe then return end
+    if input.KeyCode==Enum.KeyCode.K then local hum=LP.Character and LP.Character:FindFirstChildOfClass("Humanoid"); if hum then hum.Health=0 end end
+end)
+
+local main_conn=RunService.Heartbeat:Connect(function()
+    pcall(function()
+        if force_att and os.clock()-force_stamp>0.05 then restore_origin() end
+        local now=os.clock()
+        if ST.silent then
+            refresh_target()
+            if target_part and target_part.Parent then push_hist(target_part.Position,now) end
+            auto_step(now); install_hooks()
+        end
+        getgun_step(now); esp_step()
+        killaura_step(); antifling_step(); knife_silent_step()
+        triggerbot_step()
+    end)
+end)
+
+-- NOTIFICATIONS (Kity style)
+local notifGui=Instance.new("ScreenGui")
+notifGui.Name="DaDaNotif"
+notifGui.ResetOnSpawn=false; notifGui.IgnoreGuiInset=true
+notifGui.DisplayOrder=101
+pcall(function() notifGui.Parent=CoreGui end)
+if not notifGui.Parent then notifGui.Parent=LP:WaitForChild("PlayerGui") end
+local notifHolder=Instance.new("Frame")
+notifHolder.Size=UDim2.new(0,220,1,-80)
+notifHolder.Position=UDim2.new(1,-235,0,70)
+notifHolder.BackgroundTransparency=1; notifHolder.Parent=notifGui
+local nlist=Instance.new("UIListLayout",notifHolder)
+nlist.Padding=UDim.new(0,6); nlist.SortOrder=Enum.SortOrder.LayoutOrder
+nlist.HorizontalAlignment=Enum.HorizontalAlignment.Right
+local function notify(title,desc,dur)
+    dur=dur or 4
+    local card=Instance.new("Frame")
+    card.Size=UDim2.new(1,0,0,0); card.AutomaticSize=Enum.AutomaticSize.Y
+    card.BackgroundColor3=BG_PANEL; card.BackgroundTransparency=0.1
+    card.Parent=notifHolder
+    Instance.new("UICorner",card).CornerRadius=UDim.new(0,6)
+    local stroke=Instance.new("UIStroke",card); stroke.Color=ACCENT; stroke.Thickness=1
+    local t=Instance.new("TextLabel")
+    t.Size=UDim2.new(1,-16,0,16); t.Position=UDim2.new(0,8,0,6)
+    t.BackgroundTransparency=1; t.Text=title; t.TextColor3=TEXT_MAIN
+    t.TextSize=12; t.Font=Enum.Font.GothamBold
+    t.TextXAlignment=Enum.TextXAlignment.Left; t.Parent=card
+    local d=Instance.new("TextLabel")
+    d.Size=UDim2.new(1,-16,0,0); d.AutomaticSize=Enum.AutomaticSize.Y
+    d.Position=UDim2.new(0,8,0,24); d.BackgroundTransparency=1
+    d.Text=desc or ""; d.TextColor3=TEXT_DIM; d.TextSize=11
+    d.Font=Enum.Font.Gotham; d.TextXAlignment=Enum.TextXAlignment.Left
+    d.TextWrapped=true; d.Parent=card
+    Instance.new("UIPadding",card).PaddingBottom=UDim.new(0,6)
+    task.delay(dur,function()
+        if card and card.Parent then
+            TweenService:Create(card,TweenInfo.new(0.3),{BackgroundTransparency=1}):Play()
+            TweenService:Create(stroke,TweenInfo.new(0.3),{Transparency=1}):Play()
+            task.wait(0.3); card:Destroy()
+        end
+    end)
+end
+
+-- ================================================================
+--  МЕНЮ
+-- ================================================================
+-- [МЕНЮ ИДЁТ В СЛЕДУЮЩЕМ СООБЩЕНИИ - не влезло]-- ================================================================
+--  МЕНЮ — KITI style (использует темы Kity)
+-- ================================================================
+local gui=Instance.new("ScreenGui")
+gui.Name="DaDaMenu_"..math.random(1000,9999)
+gui.ResetOnSpawn=false; gui.IgnoreGuiInset=true
+gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+pcall(function() gui.Parent=CoreGui end)
+if not gui.Parent then gui.Parent=LP:WaitForChild("PlayerGui") end
+
+local win=Instance.new("Frame")
+win.Size=UDim2.new(0,600,0,360)
+win.Position=UDim2.new(0.5,-300,0.5,-180)
+win.BackgroundColor3=BG_MAIN
+win.BackgroundTransparency=WIN_TRANS
+win.Visible=false
+win.Active=true
+win.Parent=gui
+Instance.new("UICorner",win).CornerRadius=UDim.new(0,10)
+local winStroke=Instance.new("UIStroke",win); winStroke.Color=STROKE
+table.insert(themeUpdaters,function(t) win.BackgroundColor3=t.Background; winStroke.Color=t.Border end)
+
+local winDragBar=Instance.new("Frame")
+winDragBar.Size=UDim2.new(1,0,0,30)
+winDragBar.BackgroundTransparency=1
+winDragBar.Active=true
+winDragBar.ZIndex=10
+winDragBar.Parent=win
+local winDrag=false; local winDS; local winSP
+winDragBar.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        winDrag=true; winDS=input.Position; winSP=win.Position
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if not winDrag then return end
+    if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
+        local delta=input.Position-winDS
+        win.Position=UDim2.new(winSP.X.Scale,winSP.X.Offset+delta.X,winSP.Y.Scale,winSP.Y.Offset+delta.Y)
+    end
+end)
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then winDrag=false end
+end)
+
+local sidebar=Instance.new("Frame")
+sidebar.Size=UDim2.new(0,98,1,-12)
+sidebar.Position=UDim2.new(0,6,0,6)
+sidebar.BackgroundColor3=BG_SIDE
+sidebar.BackgroundTransparency=SIDE_TRANS
+sidebar.BorderSizePixel=0
+sidebar.Parent=win
+Instance.new("UICorner",sidebar).CornerRadius=UDim.new(0,8)
+table.insert(themeUpdaters,function(t) sidebar.BackgroundColor3=t.Inline end)
+local sbList=Instance.new("UIListLayout",sidebar)
+sbList.Padding=UDim.new(0,3)
+sbList.HorizontalAlignment=Enum.HorizontalAlignment.Center
+sbList.SortOrder=Enum.SortOrder.LayoutOrder
+local sbPad=Instance.new("UIPadding",sidebar)
+sbPad.PaddingTop=UDim.new(0,8)
+
+local pagesFrame=Instance.new("Frame")
+pagesFrame.Size=UDim2.new(1,-110,1,-12)
+pagesFrame.Position=UDim2.new(0,104,0,6)
+pagesFrame.BackgroundTransparency=1
+pagesFrame.Parent=win
+
+local TABS={"Combat","Visuals","Movement","World","Player","Misc","Config"}
+local tabBtns,tapPages={},{}
+
+for i,name in ipairs(TABS) do
+    local b=Instance.new("TextButton")
+    b.Size=UDim2.new(1,-14,0,28)
+    b.BackgroundColor3=BG_PANEL
+    b.BackgroundTransparency=0.6
+    b.Text=name; b.TextColor3=TEXT_DIM
+    b.TextSize=11; b.Font=Enum.Font.GothamBold
+    b.LayoutOrder=i
+    b.Parent=sidebar
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,6)
+    tabBtns[i]=b
+
+    local pg=Instance.new("Frame")
+    pg.Size=UDim2.new(1,0,1,0)
+    pg.BackgroundTransparency=1
+    pg.Visible=(i==1)
+    pg.Parent=pagesFrame
+    tapPages[i]=pg
+
+    local colL=Instance.new("ScrollingFrame")
+    colL.Size=UDim2.new(0.5,-3,1,0)
+    colL.BackgroundTransparency=1
+    colL.ScrollBarThickness=3
+    colL.ScrollBarImageColor3=ACCENT
+    colL.CanvasSize=UDim2.new(0,0,0,0)
+    colL.AutomaticCanvasSize=Enum.AutomaticSize.Y
+    colL.Parent=pg
+    local lL=Instance.new("UIListLayout",colL); lL.Padding=UDim.new(0,6)
+
+    local colR=Instance.new("ScrollingFrame")
+    colR.Size=UDim2.new(0.5,-3,1,0)
+    colR.Position=UDim2.new(0.5,3,0,0)
+    colR.BackgroundTransparency=1
+    colR.ScrollBarThickness=3
+    colR.ScrollBarImageColor3=ACCENT
+    colR.CanvasSize=UDim2.new(0,0,0,0)
+    colR.AutomaticCanvasSize=Enum.AutomaticSize.Y
+    colR.Parent=pg
+    local lR=Instance.new("UIListLayout",colR); lR.Padding=UDim.new(0,6)
+
+    b.MouseButton1Click:Connect(function()
+        for j,btn in ipairs(tabBtns) do
+            btn.BackgroundTransparency=(j==i) and 0.2 or 0.6
+            btn.TextColor3=(j==i) and TEXT_MAIN or TEXT_DIM
+            tapPages[j].Visible=(j==i)
+        end
+    end)
+end
+tabBtns[1].BackgroundTransparency=0.2
+tabBtns[1].TextColor3=TEXT_MAIN
+
+local function getCols(tabIndex)
+    local pg=tapPages[tabIndex]
+    local cols={}
+    for _,c in ipairs(pg:GetChildren()) do
+        if c:IsA("ScrollingFrame") then cols[#cols+1]=c end
+    end
+    return cols
+end
+
+local function makePanel(tabIndex, side, title)
+    local cols=getCols(tabIndex)
+    local target=cols[side=="left" and 1 or 2]
+    if not target then return end
+    local panel=Instance.new("Frame")
+    panel.Size=UDim2.new(1,-3,0,0)
+    panel.AutomaticSize=Enum.AutomaticSize.Y
+    panel.BackgroundColor3=BG_PANEL
+    panel.BackgroundTransparency=PANEL_TRANS
+    panel.Parent=target
+    Instance.new("UICorner",panel).CornerRadius=UDim.new(0,6)
+    local ps=Instance.new("UIStroke",panel); ps.Color=STROKE
+    table.insert(themeUpdaters,function(t) panel.BackgroundColor3=t.Inline; ps.Color=t.Border end)
+
+    local head=Instance.new("Frame")
+    head.Size=UDim2.new(1,0,0,20)
+    head.BackgroundColor3=BG_HEADER
+    head.BackgroundTransparency=HEADER_TRANS
+    head.Parent=panel
+    Instance.new("UICorner",head).CornerRadius=UDim.new(0,6)
+    table.insert(themeUpdaters,function(t) head.BackgroundColor3=t.Element end)
+    local hc=Instance.new("Frame")
+    hc.Size=UDim2.new(1,0,0,5); hc.Position=UDim2.new(0,0,1,-5)
+    hc.BackgroundColor3=BG_HEADER; hc.BackgroundTransparency=HEADER_TRANS
+    hc.BorderSizePixel=0; hc.Parent=head
+    table.insert(themeUpdaters,function(t) hc.BackgroundColor3=t.Element end)
+    local tl=Instance.new("TextLabel")
+    tl.Size=UDim2.new(1,-8,1,0); tl.Position=UDim2.new(0,6,0,0)
+    tl.BackgroundTransparency=1; tl.Text=title; tl.TextColor3=TEXT_MAIN
+    tl.TextSize=11; tl.Font=Enum.Font.GothamBold
+    tl.TextXAlignment=Enum.TextXAlignment.Left; tl.Parent=head
+    table.insert(themeUpdaters,function(t) tl.TextColor3=t.Text end)
+    local body=Instance.new("Frame")
+    body.Size=UDim2.new(1,-10,0,0); body.Position=UDim2.new(0,5,0,24)
+    body.AutomaticSize=Enum.AutomaticSize.Y; body.BackgroundTransparency=1; body.Parent=panel
+    local bl=Instance.new("UIListLayout",body); bl.Padding=UDim.new(0,2)
+    local pad=Instance.new("UIPadding",body); pad.PaddingBottom=UDim.new(0,4)
+
+    local P={body=body}
+    function P:Toggle(label,default,cb)
+        local row=Instance.new("Frame")
+        row.Size=UDim2.new(1,0,0,20); row.BackgroundTransparency=1; row.Parent=body
+        local lbl=Instance.new("TextLabel")
+        lbl.Size=UDim2.new(1,-50,1,0); lbl.Position=UDim2.new(0,4,0,0)
+        lbl.BackgroundTransparency=1; lbl.Text=label; lbl.TextColor3=TEXT_MAIN
+        lbl.TextSize=10; lbl.Font=Enum.Font.Gotham
+        lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.Parent=row
+        table.insert(themeUpdaters,function(t) lbl.TextColor3=t.Text end)
+        local tbg=Instance.new("Frame")
+        tbg.Size=UDim2.fromOffset(24,13); tbg.Position=UDim2.new(1,-28,0.5,-6.5)
+        tbg.BackgroundColor3=default and BG_ON or BG_OFF
+        tbg.BackgroundTransparency=ROW_TRANS; tbg.Parent=row
+        Instance.new("UICorner",tbg).CornerRadius=UDim.new(1,0)
+        local ball=Instance.new("Frame")
+        ball.Size=UDim2.fromOffset(9,9)
+        ball.Position=default and UDim2.new(1,-11,0.5,-4.5) or UDim2.new(0,2,0.5,-4.5)
+        ball.BackgroundColor3=Color3.fromRGB(30,30,35); ball.Parent=tbg
+        Instance.new("UICorner",ball).CornerRadius=UDim.new(1,0)
+        local btn=Instance.new("TextButton"); btn.Size=UDim2.new(1,0,1,0)
+        btn.BackgroundTransparency=1; btn.Text=""; btn.Parent=tbg
+        local st=default
+        local function refresh()
+            TweenService:Create(ball,TweenInfo.new(0.15),{Position=st and UDim2.new(1,-11,0.5,-4.5) or UDim2.new(0,2,0.5,-4.5)}):Play()
+            tbg.BackgroundColor3=st and ACCENT or BG_OFF
+        end
+        table.insert(themeUpdaters,function(t) if st then tbg.BackgroundColor3=t.Accent else tbg.BackgroundColor3=t.Border end end)
+        btn.MouseButton1Click:Connect(function()
+            st=not st; refresh()
+            if cb then pcall(cb,st) end
+        end)
+    end
+    function P:Button(label,cb)
+        local btn=Instance.new("TextButton")
+        btn.Size=UDim2.new(1,0,0,20)
+        btn.BackgroundColor3=BG_ROW; btn.BackgroundTransparency=ROW_TRANS
+        btn.Text=label; btn.TextColor3=TEXT_MAIN; btn.TextSize=10
+        btn.Font=Enum.Font.Gotham; btn.Parent=body
+        Instance.new("UICorner",btn).CornerRadius=UDim.new(0,4)
+        table.insert(themeUpdaters,function(t) btn.BackgroundColor3=t.Element; btn.TextColor3=t.Text end)
+        btn.MouseButton1Click:Connect(function() if cb then pcall(cb) end end)
+    end
+    function P:Slider(label,default,min,max,cb)
+        local row=Instance.new("Frame")
+        row.Size=UDim2.new(1,0,0,28); row.BackgroundTransparency=1; row.Parent=body
+        local lbl=Instance.new("TextLabel")
+        lbl.Size=UDim2.new(1,0,0,12); lbl.BackgroundTransparency=1
+        lbl.Text=label..": "..tostring(default)
+        lbl.TextColor3=TEXT_MAIN; lbl.TextSize=10; lbl.Font=Enum.Font.Gotham
+        lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.Parent=row
+        table.insert(themeUpdaters,function(t) lbl.TextColor3=t.Text end)
+        local track=Instance.new("Frame")
+        track.Size=UDim2.new(1,0,0,4); track.Position=UDim2.new(0,0,0,17)
+        track.BackgroundColor3=BG_SLIDER; track.BackgroundTransparency=ROW_TRANS; track.Parent=row
+        Instance.new("UICorner",track).CornerRadius=UDim.new(1,0)
+        table.insert(themeUpdaters,function(t) track.BackgroundColor3=t.Border end)
+        local fill=Instance.new("Frame")
+        fill.Size=UDim2.new((default-min)/(max-min),0,1,0); fill.BackgroundColor3=ACCENT2; fill.Parent=track
+        Instance.new("UICorner",fill).CornerRadius=UDim.new(1,0)
+        table.insert(themeUpdaters,function(t) fill.BackgroundColor3=t.LightAccent end)
+        local drag=false
+        local function upd(i)
+            local p=math.clamp((i.Position.X-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1)
+            fill.Size=UDim2.new(p,0,1,0)
+            local v=math.floor(min+(max-min)*p)
+            lbl.Text=label..": "..tostring(v)
+            if cb then cb(v) end
+        end
+        track.InputBegan:Connect(function(i)
+            if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then drag=true; upd(i) end
+        end)
+        UIS.InputEnded:Connect(function(i)
+            if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then drag=false end
+        end)
+        UIS.InputChanged:Connect(function(i)
+            if drag and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then upd(i) end
+        end)
+    end
+    function P:Dropdown(label,values,default,cb)
+        local row=Instance.new("TextButton")
+        row.Size=UDim2.new(1,0,0,20)
+        row.BackgroundColor3=BG_ROW; row.BackgroundTransparency=ROW_TRANS
+        row.Text=label..": "..tostring(default); row.TextColor3=TEXT_MAIN
+        row.TextSize=10; row.Font=Enum.Font.Gotham; row.Parent=body
+        Instance.new("UICorner",row).CornerRadius=UDim.new(0,4)
+        table.insert(themeUpdaters,function(t) row.BackgroundColor3=t.Element; row.TextColor3=t.Text end)
+        local idx=1
+        for i,v in ipairs(values) do if v==default then idx=i end end
+        row.MouseButton1Click:Connect(function()
+            idx=idx%#values+1
+            local v=values[idx]
+            row.Text=label..": "..tostring(v)
+            if cb then pcall(cb,v) end
+        end)
+    end
+    return P
+end
+
+-- FILL
+local cA=makePanel(1,"left","Silent Aim")
+cA:Toggle("Silent Aim",false,function(v)
+    ST.silent=v; ST.quick_state.silent=v
+    getgenv().SILENT_AIM_ACTIVE=v
+    if v then task.spawn(function() pcall(install_hooks) pcall(refresh_target) end)
+    else hist={}; restore_origin() end
+end)
+cA:Toggle("Prediction",true,function(v) ST.predict=v end)
+cA:Toggle("Force Shoot",false,function(v) ST.force=v; if not v then restore_origin() end end)
+cA:Slider("Origin",15,0,40,function(v) ST.stand_off=v end)
+cA:Dropdown("Hit Part",{"Head","UpperTorso","Torso","HumanoidRootPart"},"UpperTorso",function(v) ST.hit_part=v; target_part=nil end)
+cA:Toggle("Trigger Bot",false,function(v) ST.triggerbot=v end)
+cA:Toggle("FOV Circle",false,function(v) ST.fov_circle=v end)
+cA:Slider("FOV Size",120,40,300,function(v) ST.fov_size=v end)
+
+local cB=makePanel(1,"right","Auto Shoot")
+cB:Toggle("Auto Shoot",false,function(v) ST.auto_shoot=v; ST.quick_state.auto_shoot=v end)
+cB:Slider("Auto Delay",0,0,600,function(v) ST.auto_delay=v/1000 end)
+
+local vA=makePanel(2,"left","ESP")
+vA:Toggle("ESP",false,function(v) ST.esp_on=v; ST.quick_state.esp=v end)
+vA:Toggle("Box",true,function(v) ST.esp_box=v end)
+vA:Toggle("Name",true,function(v) ST.esp_name=v end)
+vA:Toggle("Distance",true,function(v) ST.esp_dist=v end)
+vA:Toggle("Health Bar",true,function(v) ST.esp_health=v end)
+
+local vB=makePanel(2,"right","ESP Extras")
+vB:Toggle("Skeleton",false,function(v) ST.esp_skel=v end)
+vB:Toggle("Snapline",false,function(v) ST.esp_line=v end)
+vB:Toggle("Chams",false,function(v) ST.esp_chams=v end)
+vB:Toggle("Flags",false,function(v) ST.esp_flags=v end)
+vB:Slider("Max Distance",1000,100,3000,function(v) ST.esp_max_dist=v end)
+
+local wA=makePanel(3,"left","Fly / Noclip")
+wA:Toggle("Fly",false,function(v) ST.fly=v end)
+wA:Slider("Fly Speed",50,10,200,function(v) ST.fly_speed=v end)
+wA:Toggle("Noclip",false,function(v) ST.noclip=v end)
+wA:Toggle("Infinite Jump",false,function(v) ST.inf_jump=v end)
+
+local wB=makePanel(3,"right","Speed / Jump")
+wB:Toggle("Speed Hack",false,function(v) ST.speed_hack=v end)
+wB:Slider("WalkSpeed",32,16,300,function(v) ST.speed_val=v end)
+wB:Toggle("Jump Power",false,function(v) ST.jump_power=v end)
+wB:Slider("JumpPower",80,50,500,function(v) ST.jump_val=v end)
+wB:Toggle("Wallhop",false,function(v) ST.wallhop=v end)
+wB:Toggle("Bhop",false,function(v) ST.bhop=v end)
+wB:Toggle("Gravity",false,function(v) ST.gravity=v end)
+wB:Slider("Gravity",196,0,500,function(v) ST.gravity_val=v end)
+
+local wlA=makePanel(4,"left","Visuals")
+wlA:Toggle("Fullbright",false,function(v) ST.fullbright=v end)
+wlA:Toggle("FOV Changer",false,function(v) ST.fov_changer=v end)
+wlA:Slider("FOV",90,30,120,function(v) ST.fov_value=v end)
+wlA:Toggle("World Color",false,function(v) ST.world_color=v end)
+
+local wlB=makePanel(4,"right","Skybox")
+wlB:Dropdown("Skybox",{"Default","Space","Red","Purple"},"Default",function(v) ST.skybox=v; local f=getgenv().DaDa_apply_skybox; if f then f(v) end end)
+
+local pA=makePanel(5,"left","Character")
+pA:Toggle("Transparency",false,function(v) ST.char_transparency=v end)
+pA:Slider("Transp Val",0.3,0,0.9,function(v) ST.char_trans_val=v end)
+pA:Toggle("Fake Headless",false,function(v) ST.fake_headless=v end)
+pA:Toggle("Fake Korblox",false,function(v) ST.fake_korblox=v end)
+
+local pB=makePanel(5,"right","Get Gun")
+pB:Toggle("Auto Get Gun",false,function(v) ST.getgun=v; ST.quick_state.getgun=v end)
+pB:Dropdown("Mode",{"Touch","Teleport","PlayerTP","AutoGrab"},"Touch",function(v) ST.getgun_mode=v end)
+pB:Slider("Interval",15,5,100,function(v) ST.getgun_interval=v/100 end)
+pB:Toggle("Teleport Back",true,function(v) ST.getgun_tp_back=v end)
+pB:Toggle("Auto Knife Throw",false,function(v) ST.auto_knife_throw=v end)
+pB:Toggle("Knife Prediction",true,function(v) ST.knife_predict=v end)
+pB:Slider("Knife Lead %",100,0,300,function(v) ST.knife_lead=v end)
+
+local mA=makePanel(6,"left","World")
+mA:Toggle("Anti-Fling",false,function(v) ST.antifling=v end)
+mA:Toggle("Auto Farm",false,function(v) farm_cfg.on=v; ST.autofarm=v; if not v then farm_release() end end)
+mA:Dropdown("Farm Mode",{"Basic","Down"},"Basic",function(v) farm_cfg.mode=v end)
+mA:Toggle("Avoid Murder",false,function(v) farm_cfg.avoid_murder=v; ST.avoid_murder=v end)
+
+local mB=makePanel(6,"right","Fling / Kill")
+mB:Toggle("Fling Murderer",false,function(v) ST.fling_murder=v; if v then fling_loop() end end)
+mB:Toggle("Fling Sheriff",false,function(v) ST.fling_sheriff=v; if v then fling_loop() end end)
+mB:Toggle("Kill Aura",false,function(v) ST.killaura=v end)
+mB:Toggle("Auto Knife",false,function(v) ST.autoknife=v end)
+mB:Slider("Kill Distance",30,5,60,function(v) ST.killaura_dist=v end)
+
+local cfgA=makePanel(7,"left","Config")
+cfgA:Dropdown("Theme",{"Default","White","Blue","Pink","Purple","Green"},"Purple",function(v)
+    applyTheme(v)
+    notify("Theme","Changed to "..v)
+end)
+cfgA:Button("Save Config",function()
+    if type(writefile)~="function" then return notify("Error","writefile not supported") end
+    local data={}
+    for k,v in pairs(ST) do if type(v)=="boolean" or type(v)=="number" or type(v)=="string" then data[k]=v end end
+    local ok,encoded = pcall(function() return HttpService:JSONEncode(data) end)
+    if ok then pcall(writefile,"DaDa_config.json",encoded); notify("Config","Saved") end
+end)
+cfgA:Button("Load Config",function()
+    if type(readfile)~="function" then return notify("Error","readfile not supported") end
+    local ok,raw = pcall(readfile,"DaDa_config.json")
+    if not ok then return notify("Error","File not found") end
+    local ok2,data = pcall(function() return HttpService:JSONDecode(raw) end)
+    if ok2 then for k,v in pairs(data) do ST[k]=v end; notify("Config","Loaded") end
+end)
+cfgA:Button("Unload",function() if getgenv().DADA_UNLOAD then getgenv().DADA_UNLOAD() end end)
+
+local cfgB=makePanel(7,"right","Info")
+cfgB:Button("Version: v9")
+cfgB:Button("Themes from Kity")
+cfgB:Button("Notify Test",function() notify("DaDa","Test notification from Kity style") end)
+
+-- QUICK MENU
+local quick_gui=Instance.new("ScreenGui")
+quick_gui.Name="DaDaQuick_"..math.random(1000,9999)
+quick_gui.ResetOnSpawn=false; quick_gui.IgnoreGuiInset=true
+quick_gui.DisplayOrder=99
+pcall(function() quick_gui.Parent=CoreGui end)
+if not quick_gui.Parent then quick_gui.Parent=LP:WaitForChild("PlayerGui") end
+local qholder=Instance.new("Frame")
+qholder.Size=UDim2.new(0,140,0,0)
+qholder.AutomaticSize=Enum.AutomaticSize.Y
+qholder.BackgroundTransparency=1
+qholder.Visible=false
+qholder.Parent=quick_gui
+local qlist=Instance.new("UIListLayout",qholder); qlist.Padding=UDim.new(0,4)
+local qbuttons={}
+for i,feat in ipairs(ST.quick_features) do
+    local b=Instance.new("TextButton")
+    b.Size=UDim2.new(1,0,0,26)
+    b.BackgroundColor3=BG_PANEL; b.BackgroundTransparency=PANEL_TRANS
+    b.Text=feat.name..": OFF"; b.TextColor3=TEXT_DIM
+    b.TextSize=11; b.Font=Enum.Font.GothamBold
+    b.LayoutOrder=i; b.Parent=qholder
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,6)
+    b.MouseButton1Click:Connect(function()
+        local flag=feat.flag
+        local new=not ST.quick_state[flag]
+        ST.quick_state[flag]=new
+        if flag=="silent" then ST.silent=new; getgenv().SILENT_AIM_ACTIVE=new; if new then task.spawn(install_hooks) end
+        elseif flag=="auto_shoot" then ST.auto_shoot=new
+        elseif flag=="getgun" then ST.getgun=new
+        elseif flag=="esp" then ST.esp_on=new end
+    end)
+    qbuttons[feat.name]=b
+end
+local function place_quick()
+    local y=ST.quick_offset_y; local c=ST.quick_corner
+    if c=="Bottom-Right" then qholder.Position=UDim2.new(1,-150,1,-y); qlist.HorizontalAlignment=Enum.HorizontalAlignment.Right
+    elseif c=="Bottom-Left" then qholder.Position=UDim2.new(0,10,1,-y); qlist.HorizontalAlignment=Enum.HorizontalAlignment.Left
+    elseif c=="Top-Right" then qholder.Position=UDim2.new(1,-150,0,50); qlist.HorizontalAlignment=Enum.HorizontalAlignment.Right
+    elseif c=="Top-Left" then qholder.Position=UDim2.new(0,10,0,50); qlist.HorizontalAlignment=Enum.HorizontalAlignment.Left end
+end
+RunService.RenderStepped:Connect(function()
+    if not ST.quick then return end
+    for _,f in ipairs(ST.quick_features) do
+        local b=qbuttons[f.name]
+        if b then
+            local on=ST.quick_state[f.flag]
+            b.Text=f.name..": "..(on and "ON" or "OFF")
+            b.TextColor3=on and Color3.fromRGB(120,220,150) or TEXT_DIM
+        end
+    end
+end)
+
+-- HUB
+local hubGui=Instance.new("ScreenGui")
+hubGui.Name="DaDaHub_"..math.random(1000,9999)
+hubGui.ResetOnSpawn=false; hubGui.IgnoreGuiInset=true
+hubGui.DisplayOrder=100
+pcall(function() hubGui.Parent=CoreGui end)
+if not hubGui.Parent then hubGui.Parent=LP:WaitForChild("PlayerGui") end
+local hub=Instance.new("Frame")
+hub.Size=UDim2.new(0,200,0,22)
+hub.Position=UDim2.new(0.5,-100,0,6)
+hub.BackgroundColor3=Color3.fromRGB(0,0,0)
+hub.BackgroundTransparency=0.35
+hub.BorderSizePixel=0
+hub.Active=true
+hub.Parent=hubGui
+Instance.new("UICorner",hub).CornerRadius=UDim.new(0,5)
+local hubStroke=Instance.new("UIStroke",hub); hubStroke.Color=Color3.fromRGB(45,45,55)
+table.insert(themeUpdaters,function(t) hubStroke.Color=t.Accent end)
+local hubLayout=Instance.new("UIListLayout",hub)
+hubLayout.FillDirection=Enum.FillDirection.Horizontal
+hubLayout.Padding=UDim.new(0,6)
+hubLayout.VerticalAlignment=Enum.VerticalAlignment.Center
+hubLayout.HorizontalAlignment=Enum.HorizontalAlignment.Center
+local hubPad=Instance.new("UIPadding",hub)
+hubPad.PaddingLeft=UDim.new(0,8); hubPad.PaddingRight=UDim.new(0,8)
+local function makeChip(order,text,color)
+    local chip=Instance.new("Frame")
+    chip.LayoutOrder=order
+    chip.AutomaticSize=Enum.AutomaticSize.X
+    chip.Size=UDim2.new(0,0,1,-4)
+    chip.BackgroundTransparency=1; chip.Parent=hub
+    local lbl=Instance.new("TextLabel")
+    lbl.Size=UDim2.new(0,0,1,0)
+    lbl.AutomaticSize=Enum.AutomaticSize.X
+    lbl.BackgroundTransparency=1; lbl.Text=text
+    lbl.TextColor3=color or Color3.fromRGB(220,220,230)
+    lbl.TextSize=10; lbl.Font=Enum.Font.GothamBold
+    lbl.Parent=chip
+    return lbl
+end
+local fpsChip=makeChip(1,"0 fps",Color3.fromRGB(180,180,190))
+local pingChip=makeChip(2,"0 ms",Color3.fromRGB(180,180,190))
+makeChip(3,(LP.DisplayName or LP.Name),Color3.fromRGB(200,180,255))
+local fpsCount=0; local fpsLast=tick()
+local pingSmooth=0; local pingSeen=false
+RunService.RenderStepped:Connect(function()
+    fpsCount=fpsCount+1
+    local t=tick()
+    if t-fpsLast>=0.5 then
+        local fps=math.floor(fpsCount/(t-fpsLast))
+        fpsCount=0; fpsLast=t
+        fpsChip.Text=fps.." fps"
+        local ping=0
+        pcall(function() ping=math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
+        if pingSeen then pingSmooth=pingSmooth*0.7+ping*0.3 else pingSmooth=ping; pingSeen=true end
+        pingChip.Text=math.floor(pingSmooth).." ms"
+    end
+end)
+local hubDrag=false; local hubMoved=false; local hubDS; local hubSP
+hub.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        hubDrag=true; hubMoved=false; hubDS=input.Position; hubSP=hub.Position
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if not hubDrag then return end
+    if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
+        local delta=input.Position-hubDS
+        if delta.Magnitude>5 then hubMoved=true end
+        hub.Position=UDim2.new(hubSP.X.Scale,hubSP.X.Offset+delta.X,hubSP.Y.Scale,hubSP.Y.Offset+delta.Y)
+    end
+end)
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        if hubDrag and not hubMoved then win.Visible=not win.Visible end
+        hubDrag=false
+    end
+end)
+
+-- UNLOAD
+getgenv().DADA_UNLOAD=function()
+    ST.silent=false; ST.auto_shoot=false; ST.force=false
+    ST.getgun=false; ST.quick=false; ST.esp_on=false
+    ST.fling_murder=false; ST.fling_sheriff=false
+    ST.killaura=false; ST.autoknife=false; ST.antifling=false
+    ST.auto_knife_throw=false; ST.fly=false; ST.noclip=false; ST.inf_jump=false
+    ST.speed_hack=false; ST.jump_power=false; ST.wallhop=false; ST.bhop=false; ST.gravity=false
+    ST.fullbright=false; ST.fov_changer=false; ST.world_color=false
+    ST.char_transparency=false; ST.fake_headless=false; ST.fake_korblox=false
+    getgenv().SILENT_AIM_ACTIVE=false
+    farm_cfg.on=false; farm_release()
+    hist={}; restore_origin()
+    if main_conn then pcall(function() main_conn:Disconnect() end) main_conn=nil end
+    if farm_conn then pcall(function() farm_conn:Disconnect() end) farm_conn=nil end
+    local m=weapon_service
+    if m then
+        pcall(function() setreadonly(m,false) end)
+        if orig_mouse then pcall(function() m.GetMouseTargetCFrame=orig_mouse end) end
+        if orig_screen then pcall(function() m.GetTargetPosition=orig_screen end) end
+    end
+    pcall(function() gui:Destroy() end)
+    pcall(function() quick_gui:Destroy() end)
+    pcall(function() fovGui:Destroy() end)
+    pcall(function() hubGui:Destroy() end)
+    pcall(function() notifGui:Destroy() end)
+    for _,d in pairs(esp_cache) do remove_esp(d) end
+    esp_cache={}; clear_highlights()
+    if model_inst then pcall(function() model_inst:Destroy() end) end
+    for p,v in pairs(af_cache) do if p.Parent then pcall(function() p.CanCollide=v end) end end
+    af_cache={}
+end
