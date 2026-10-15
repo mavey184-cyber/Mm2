@@ -1652,6 +1652,270 @@ end
 initFarmFling()
 
 -- ============================================================
+-- INIT 9.5: FLING PRO (отдельный модуль — killer/sheriff/murderer/all/target)
+-- ============================================================
+local function initFlingPro()
+    -- STATE — добавляем свои поля, не трогая ST.fling_*
+    ST.fling_pro = ST.fling_pro or {
+        enabled = false,
+        mode = "killer",        -- "killer" | "sheriff" | "murderer" | "all" | "target"
+        target = nil,           -- имя игрока для "target"
+        bypass_vel = false,
+        delay = 0.15,
+        duration = 2,
+        on = false,
+    }
+    local FP = ST.fling_pro
+
+    -- Запоминаем последнего убийцу
+    ST.fling_pro_killer = ST.fling_pro_killer or { name = nil }
+    local function bind_killer(char)
+        if not char then return end
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum then return end
+        hum.Died:Connect(function()
+            -- ищем "creator" или "Killer" в Humanoid
+            local k = hum:FindFirstChild("creator") or hum:FindFirstChild("Killer")
+            if k and k.Value then
+                ST.fling_pro_killer.name = k.Value.Name
+            end
+        end)
+    end
+    bind_killer(LP.Character)
+    LP.CharacterAdded:Connect(function(c) task.wait(1) bind_killer(c) end)
+
+    -- Хелперы
+    local function get_targets()
+        local roles = get_roles()
+        local list = {}
+        if FP.mode == "all" then
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LP and p.Character then list[#list+1] = p end
+            end
+        elseif FP.mode == "killer" then
+            local n = ST.fling_pro_killer.name
+            if n then
+                local p = Players:FindFirstChild(n)
+                if p and p ~= LP then list[#list+1] = p end
+            end
+        elseif FP.mode == "target" then
+            if FP.target and FP.target ~= "" then
+                local p = Players:FindFirstChild(FP.target)
+                if p and p ~= LP then list[#list+1] = p end
+            end
+        elseif FP.mode == "murderer" then
+            for name, role in pairs(roles) do
+                if role == "Murderer" and name ~= LP.Name then
+                    local p = Players:FindFirstChild(name)
+                    if p then list[#list+1] = p break end
+                end
+            end
+        elseif FP.mode == "sheriff" then
+            for name, role in pairs(roles) do
+                if (role == "Sheriff" or role == "Hero") and name ~= LP.Name then
+                    local p = Players:FindFirstChild(name)
+                    if p then list[#list+1] = p break end
+                end
+            end
+        end
+        return list
+    end
+
+    -- Сам флинг (1:1 Шитаро)
+    local function do_fling_pro(tp)
+        if not tp or not tp.Character then return end
+        local hrp = get_hrp()
+        local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+        if not hrp then return end
+        local tc = tp.Character
+        local thrp = tc:FindFirstChild("HumanoidRootPart") or tc:FindFirstChild("Head")
+        local th = tc:FindFirstChildOfClass("Humanoid")
+        if not thrp then return end
+
+        if not getgenv().OldPos or hrp.Velocity.Magnitude < 50 then
+            getgenv().OldPos = hrp.CFrame
+        end
+        getgenv().FLING_ACTIVE = (getgenv().FLING_ACTIVE or 0) + 1
+
+        if th and th.Sit then
+            getgenv().FLING_ACTIVE = math.max(0, (getgenv().FLING_ACTIVE or 1) - 1)
+            return
+        end
+
+        local camera = workspace.CurrentCamera
+        local old_fdh = workspace.FallenPartsDestroyHeight
+        if thrp then camera.CameraSubject = thrp elseif th then camera.CameraSubject = th end
+        pcall(function() workspace.FallenPartsDestroyHeight = 0/0 end)
+
+        local bv = Instance.new("BodyVelocity")
+        bv.Parent = hrp
+        bv.Velocity = Vector3.new(0,0,0)
+        bv.MaxForce = Vector3.new(9e9,9e9,9e9)
+
+        local se = hum and hum:GetStateEnabled(Enum.HumanoidStateType.Seated)
+        if hum then hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false) end
+
+        local tw = FP.duration or 2
+        local tm = tick()
+        local ang = 0
+
+        repeat
+            if hrp and th then
+                local tv
+                if FP.bypass_vel then
+                    tv = th.MoveDirection * th.WalkSpeed
+                else
+                    tv = thrp.Velocity
+                end
+
+                if tv.Magnitude < 50 then
+                    ang = ang + 100
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0) + th.MoveDirection * tv.Magnitude / 1.25
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, 0) + th.MoveDirection
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0) + th.MoveDirection
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(ang), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                else
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, th.WalkSpeed)
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, -th.WalkSpeed)
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, 1.5, th.WalkSpeed)
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(math.rad(90), 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                    hrp.CFrame = CFrame.new(thrp.Position) * CFrame.new(0, -1.5, 0)
+                    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, 0, 0)
+                    LP.Character:SetPrimaryPartCFrame(hrp.CFrame)
+                    hrp.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                    hrp.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+                    task.wait()
+                end
+            end
+        until tm + tw < tick() or not FP.on
+
+        if bv then bv:Destroy() end
+        if hum and se ~= nil then hum:SetStateEnabled(Enum.HumanoidStateType.Seated, se) end
+        camera.CameraSubject = hum
+
+        if getgenv().OldPos and hrp then
+            hrp.CFrame = getgenv().OldPos * CFrame.new(0, 0.5, 0)
+            LP.Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, 0.5, 0))
+            if hum then hum:ChangeState("GettingUp") end
+            for _, part in pairs(LP.Character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.Velocity = Vector3.new()
+                    part.RotVelocity = Vector3.new()
+                end
+            end
+            pcall(function() workspace.FallenPartsDestroyHeight = old_fdh end)
+            getgenv().OldPos = nil
+        end
+
+        getgenv().FLING_ACTIVE = math.max(0, (getgenv().FLING_ACTIVE or 1) - 1)
+    end
+
+    -- Loop
+    local thread = nil
+    local function start_loop()
+        if thread then return end
+        thread = task.spawn(function()
+            while FP.on do
+                local list = get_targets()
+                if #list == 0 then
+                    task.wait(0.3)
+                else
+                    for i = 1, #list do
+                        if not FP.on then break end
+                        do_fling_pro(list[i])
+                        task.wait(FP.delay or 0.15)
+                    end
+                    task.wait()
+                end
+            end
+            thread = nil
+        end)
+    end
+
+    -- API
+    SHF.fling_pro = {
+        set_on = function(v) FP.on = v; if v then start_loop() end end,
+        set_mode = function(m) FP.mode = m end,
+        set_target = function(n) FP.target = n end,
+        set_bypass = function(v) FP.bypass_vel = v end,
+        set_delay = function(v) FP.delay = v end,
+        set_duration = function(v) FP.duration = v end,
+        get_killer = function() return ST.fling_pro_killer.name end,
+        state = FP,
+    }
+
+    -- Auto cleanup
+    LP.CharacterRemoving:Connect(function()
+        FP.on = false
+    end)
+end
+initFlingPro()
+
+-- ============================================================
 -- INIT 10: MOVEMENT (с ИСПРАВЛЕННЫМ InfJump)
 -- ============================================================
 local function initMovement()
