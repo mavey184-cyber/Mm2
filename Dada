@@ -3640,10 +3640,6 @@ end)
         end
         task.spawn(function() while task.wait(1) do if SHF.tracer and not tracerConn then tracerAttach() end end end)
     end
-local cfgA=makePanel(7,"left","Config")
-cfgA:Dropdown("Theme",...)
-cfgA:Toggle("Quick Menu",...)
-...
 -- ==== Configs ====
 local configName = "default"
 local nameBox = Instance.new("TextBox")
