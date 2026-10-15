@@ -1914,6 +1914,35 @@ local function initFlingPro()
     end)
 end
 initFlingPro()
+-- Сброс флинга при респавне
+LP.CharacterAdded:Connect(function(char)
+    -- 1) сбрасываем сохранённую позицию
+    getgenv().OldPos = nil
+    -- 2) сбрасываем счётчик
+    getgenv().FLING_ACTIVE = 0
+    -- 3) сбрасываем физику
+    local hrp = char:WaitForChild("HumanoidRootPart", 5)
+    if hrp then
+        pcall(function()
+            hrp.AssemblyLinearVelocity = Vector3.zero
+            hrp.AssemblyAngularVelocity = Vector3.zero
+        end)
+    end
+    -- 4) восстанавливаем Seated
+    local hum = char:WaitForChild("Humanoid", 5)
+    if hum then
+        pcall(function()
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        end)
+    end
+    -- 5) если флинг включён — перезапускаем loop
+    task.wait(1.5)
+    if (ST.fling_murder or ST.fling_sheriff or ST.fling_killer or ST.fling_all or ST.fling_target) then
+        -- принудительно перезапустить
+        fling_thread = nil
+        if fling_loop then fling_loop() end
+    end
+end)
 
 -- ============================================================
 -- INIT 10: MOVEMENT (с ИСПРАВЛЕННЫМ InfJump)
