@@ -3845,12 +3845,10 @@ local function initHub()
         lbl.Parent=chip
         return lbl
     end
-    local fpsChip=makeChip(1,"0 fps",Color3.fromRGB(180,180,190))
-    local pingChip=makeChip(2,"0 ms",Color3.fromRGB(180,180,190))
-    makeChip(3,"DaDa v16",Color3.fromRGB(200,120,255))
-    makeChip(4,(LP.DisplayName or LP.Name),Color3.fromRGB(200,180,255    makeChip(4,(LP.DisplayName or LP.Name),Color3.fromRGB(200,180,255))
-    local fpsChip=makeChip(5,"0 fps",Color3.fromRGB(180,180,190))
-    local pingChip=makeChip(6,"0 ms",Color3.fromRGB(180,180,190))
+    makeChip(1,"DaDa v16",Color3.fromRGB(200,120,255))
+    makeChip(2,(LP.DisplayName or LP.Name),Color3.fromRGB(200,180,255))
+    local fpsChip=makeChip(3,"0 fps",Color3.fromRGB(180,180,190))
+    local pingChip=makeChip(4,"0 ms",Color3.fromRGB(180,180,190))
     local fpsCount=0; local fpsLast=tick(); local pingSmooth=0; local pingSeen=false
     RunService.RenderStepped:Connect(function()
         fpsCount=fpsCount+1
