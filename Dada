@@ -22,7 +22,6 @@ local antifling_step, do_fling, fling_loop, killaura_step
 local main_conn, gui, win, quick_gui, hubGui, notifGui, fovGui
 local target_player, target_char, target_part, target_hum
 local SL_refresh, SL_alive, SL_origin, SL_installHooks, makePanel
-
 -- ============================================================
 -- INIT 0: LOADING SCREEN
 -- ============================================================
@@ -187,7 +186,6 @@ task.spawn(function()
     task.wait(0.6)
     loadGui:Destroy()
 end)
-
 -- ============================================================
 -- INIT 1: SERVICES + THEMES
 -- ============================================================
