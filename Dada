@@ -3257,12 +3257,64 @@ local function initMenu()
     cD:Toggle("Auto Knife",false,function(v) ST.autoknife=v end)
     cD:Slider("Kill Distance",30,5,60,function(v) ST.killaura_dist=v end)
 
-    -- FLING
-    local fA=makePanel(2,"left","Fling")
-    fA:Toggle("Fling Murderer",false,function(v) ST.fling_murder=v; if v then fling_loop() end end)
-    fA:Toggle("Fling Sheriff",false,function(v) ST.fling_sheriff=v; if v then fling_loop() end end)
-    local fB=makePanel(2,"right","Anti-Fling")
-    fB:Toggle("Anti-Fling",false,function(v) ST.antifling=v end)
+    -- fling
+local fA=makePanel(2,"left","Fling Pro")
+
+fA:Toggle("Fling On",false,function(v)
+    SHF.fling_pro.set_on(v)
+end)
+
+fA:Dropdown("Mode",{"killer","murderer","sheriff","all","target"},"killer",function(v)
+    SHF.fling_pro.set_mode(v)
+end)
+
+-- динамический таргет: клик по строке — циклит по игрокам
+local targetRow = Instance.new("TextButton")
+targetRow.Size = UDim2.new(1,0,0,20)
+targetRow.BackgroundColor3 = BG_ROW
+targetRow.BackgroundTransparency = ROW_TRANS
+targetRow.Text = "Target: none"
+targetRow.TextColor3 = TEXT_MAIN
+targetRow.TextSize = 10
+targetRow.Font = Enum.Font.Gotham
+targetRow.Parent = fA.body
+Instance.new("UICorner", targetRow).CornerRadius = UDim.new(0,4)
+
+local tList, tIdx = {}, 0
+local function refresh_t()
+    tList = {}
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p ~= LP then
+            tList[#tList+1] = { name = p.Name, disp = p.DisplayName or p.Name }
+        end
+    end
+end
+
+targetRow.MouseButton1Click:Connect(function()
+    refresh_t()
+    if #tList == 0 then
+        targetRow.Text = "Target: no players"
+        return
+    end
+    tIdx = tIdx % #tList + 1
+    local t = tList[tIdx]
+    SHF.fling_pro.set_target(t.name)
+    SHF.fling_pro.set_mode("target")
+    targetRow.Text = "Target: "..t.disp
+end)
+
+fA:Slider("Duration",2,1,5,function(v) SHF.fling_pro.set_duration(v) end)
+fA:Slider("Delay",15,1,50,function(v) SHF.fling_pro.set_delay(v/100) end)
+fA:Toggle("Bypass Velocity",false,function(v) SHF.fling_pro.set_bypass(v) end)
+
+fA:Toggle("Anti-Fling",false,function(v)
+    ST.antifling = v
+end)
+
+fA:Button("Clear Target",function()
+    SHF.fling_pro.set_target(nil)
+    targetRow.Text = "Target: none"
+end)
 
     -- MOVEMENT
     local mA=makePanel(3,"left","Fly / Noclip")
