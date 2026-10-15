@@ -22,7 +22,170 @@ local antifling_step, do_fling, fling_loop, killaura_step
 local main_conn, gui, win, quick_gui, hubGui, notifGui, fovGui
 local target_player, target_char, target_part, target_hum
 local SL_refresh, SL_alive, SL_origin, SL_installHooks, makePanel
+-- ============================================================
+-- INIT 0: LOADING SCREEN
+-- ============================================================
+local loadGui = Instance.new("ScreenGui")
+loadGui.Name = "DaDaLoad_"..math.random(1000,9999)
+loadGui.ResetOnSpawn = false
+loadGui.IgnoreGuiInset = true
+loadGui.DisplayOrder = 9999
+pcall(function() loadGui.Parent = game:GetService("CoreGui") end)
+if not loadGui.Parent then loadGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") end
 
+-- затемняющий фон
+local bg = Instance.new("Frame")
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.fromRGB(0,0,0)
+bg.BackgroundTransparency = 1
+bg.BorderSizePixel = 0
+bg.ZIndex = 1
+bg.Parent = loadGui
+
+-- центр
+local center = Instance.new("Frame")
+center.Size = UDim2.new(0,320,0,180)
+center.Position = UDim2.new(0.5,-160,0.5,-90)
+center.BackgroundTransparency = 1
+center.ZIndex = 2
+center.Parent = loadGui
+
+-- логотип DaDa
+local logo = Instance.new("TextLabel")
+logo.Size = UDim2.new(1,0,0,60)
+logo.Position = UDim2.new(0,0,0,10)
+logo.BackgroundTransparency = 1
+logo.Text = "DaDa"
+logo.TextColor3 = Color3.fromRGB(200,120,255)
+logo.TextSize = 64
+logo.Font = Enum.Font.GothamBlack
+logo.TextTransparency = 1
+logo.TextStrokeTransparency = 1
+logo.TextStrokeColor3 = Color3.fromRGB(140,60,200)
+logo.ZIndex = 3
+logo.Parent = center
+
+local logoGlow = Instance.new("TextLabel")
+logoGlow.Size = UDim2.new(1,0,0,60)
+logoGlow.Position = UDim2.new(0,0,0,10)
+logoGlow.BackgroundTransparency = 1
+logoGlow.Text = "DaDa"
+logoGlow.TextColor3 = Color3.fromRGB(180,80,255)
+logoGlow.TextSize = 66
+logoGlow.Font = Enum.Font.GothamBlack
+logoGlow.TextTransparency = 1
+logoGlow.ZIndex = 2
+logoGlow.Parent = center
+
+-- подзаголовок
+local sub = Instance.new("TextLabel")
+sub.Size = UDim2.new(1,0,0,20)
+sub.Position = UDim2.new(0,0,0,72)
+sub.BackgroundTransparency = 1
+sub.Text = "v16  •  загрузка"
+sub.TextColor3 = Color3.fromRGB(150,150,160)
+sub.TextSize = 14
+sub.Font = Enum.Font.GothamMedium
+sub.TextTransparency = 1
+sub.ZIndex = 3
+sub.Parent = center
+
+-- прогресс-бар
+local barBg = Instance.new("Frame")
+barBg.Size = UDim2.new(1,-40,0,6)
+barBg.Position = UDim2.new(0,20,0,120)
+barBg.BackgroundColor3 = Color3.fromRGB(40,40,50)
+barBg.BorderSizePixel = 0
+barBg.BackgroundTransparency = 1
+barBg.ZIndex = 3
+barBg.Parent = center
+Instance.new("UICorner", barBg).CornerRadius = UDim.new(1,0)
+
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.new(0,0,1,0)
+barFill.BackgroundColor3 = Color3.fromRGB(200,120,255)
+barFill.BorderSizePixel = 0
+barFill.ZIndex = 4
+barFill.Parent = barBg
+Instance.new("UICorner", barFill).CornerRadius = UDim.new(1,0)
+
+local barGlow = Instance.new("Frame")
+barGlow.Size = UDim2.new(0,0,1,0)
+barGlow.BackgroundColor3 = Color3.fromRGB(255,200,255)
+barGlow.BackgroundTransparency = 0.5
+barGlow.BorderSizePixel = 0
+barGlow.ZIndex = 5
+barGlow.Parent = barBg
+Instance.new("UICorner", barGlow).CornerRadius = UDim.new(1,0)
+
+-- процент
+local pct = Instance.new("TextLabel")
+pct.Size = UDim2.new(1,0,0,16)
+pct.Position = UDim2.new(0,0,0,132)
+pct.BackgroundTransparency = 1
+pct.Text = "0%"
+pct.TextColor3 = Color3.fromRGB(180,180,200)
+pct.TextSize = 12
+pct.Font = Enum.Font.GothamBold
+pct.TextTransparency = 1
+pct.ZIndex = 3
+pct.Parent = center
+
+-- ==== АНИМАЦИЯ ЗАГРУЗКИ (3 сек) ====
+local TweenService = game:GetService("TweenService")
+
+-- фон плавно темнеет
+TweenService:Create(bg, TweenInfo.new(0.4), { BackgroundTransparency = 0.15 }):Play()
+
+-- логотип появляется
+task.wait(0.2)
+TweenService:Create(logo, TweenInfo.new(0.4, Enum.EasingStyle.Back), { TextTransparency = 0 }):Play()
+TweenService:Create(logo, TweenInfo.new(0.4), { TextStrokeTransparency = 0.6 }):Play()
+TweenService:Create(logoGlow, TweenInfo.new(0.6), { TextTransparency = 0.8 }):Play()
+task.wait(0.2)
+TweenService:Create(sub, TweenInfo.new(0.3), { TextTransparency = 0 }):Play()
+TweenService:Create(barBg, TweenInfo.new(0.3), { BackgroundTransparency = 0 }):Play()
+TweenService:Create(pct, TweenInfo.new(0.3), { TextTransparency = 0 }):Play()
+
+-- прогресс идёт 3 секунды
+local DURATION = 3
+local start_t = tick()
+
+task.spawn(function()
+    while true do
+        local elapsed = tick() - start_t
+        local progress = math.clamp(elapsed / DURATION, 0, 1)
+
+        -- лёгкая нелинейность (ease)
+        local eased = progress
+        if progress > 0.5 then
+            eased = 1 - (1 - progress)^2 * 0.5
+        end
+
+        barFill.Size = UDim2.new(eased, 0, 1, 0)
+        barGlow.Size = UDim2.new(math.min(eased + 0.05, 1), 0, 1, 0)
+        pct.Text = math.floor(progress * 100) .. "%"
+
+        if progress >= 1 then break end
+        task.wait()
+    end
+
+    -- задержка перед исчезновением
+    task.wait(0.3)
+
+    -- плавное исчезновение
+    TweenService:Create(logo, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+    TweenService:Create(logoGlow, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+    TweenService:Create(sub, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+    TweenService:Create(barBg, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+    TweenService:Create(barFill, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+    TweenService:Create(barGlow, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
+    TweenService:Create(pct, TweenInfo.new(0.4), { TextTransparency = 1 }):Play()
+    TweenService:Create(bg, TweenInfo.new(0.5), { BackgroundTransparency = 1 }):Play()
+
+    task.wait(0.6)
+    loadGui:Destroy()
+end)
 -- ============================================================
 -- INIT 1: SERVICES + THEMES
 -- ============================================================
@@ -3477,6 +3640,61 @@ end)
         end
         task.spawn(function() while task.wait(1) do if SHF.tracer and not tracerConn then tracerAttach() end end end)
     end
+local cfgA=makePanel(7,"left","Config")
+cfgA:Dropdown("Theme",...)
+cfgA:Toggle("Quick Menu",...)
+...
+-- ==== Configs ====
+local configName = "default"
+local nameBox = Instance.new("TextBox")
+nameBox.Size = UDim2.new(1,0,0,20)
+nameBox.BackgroundColor3 = BG_ROW
+nameBox.BackgroundTransparency = ROW_TRANS
+nameBox.Text = "default"
+nameBox.PlaceholderText = "имя конфига"
+nameBox.TextColor3 = TEXT_MAIN
+nameBox.TextSize = 10
+nameBox.Font = Enum.Font.Gotham
+nameBox.ClearTextOnFocus = false
+nameBox.Parent = cfgA.body
+Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0,4)
+
+nameBox.FocusLost:Connect(function()
+    configName = nameBox.Text ~= "" and nameBox.Text or "default"
+end)
+
+cfgA:Button("  Save Config", function()
+    local CFG = getgenv().DaDa_Config
+    if CFG then CFG.save(configName) end
+end)
+
+cfgA:Button("  Load Config", function()
+    local CFG = getgenv().DaDa_Config
+    if CFG then CFG.load(configName) end
+end)
+
+cfgA:Button("  Delete Config", function()
+    local CFG = getgenv().DaDa_Config
+    if CFG then CFG.delete(configName) end
+end)
+
+cfgA:Button("  List Configs", function()
+    local CFG = getgenv().DaDa_Config
+    if not CFG then return end
+    local list = CFG.list()
+    if #list == 0 then
+        notify("Configs", "Пусто")
+    else
+        notify("Configs", table.concat(list, ", "))
+    end
+end)
+
+cfgA:Button("  Load Last", function()
+    local CFG = getgenv().DaDa_Config
+    if not CFG then return end
+    local last = CFG.last()
+    if last then CFG.load(last) else notify("Configs", "Нет последнего") end
+end)
 
     -- CROSSHAIR
     do
@@ -4330,6 +4548,201 @@ do
     end
     getgenv().DaDa_LOADED=true
 end
+-- ============================================================
+-- INIT 22: CONFIG SYSTEM
+-- ============================================================
+local function initConfigs()
+    local CONFIG_DIR = "DaDa_configs/"
+    local CONFIG_EXT = ".json"
+    local CONFIG_LAST = "DaDa_configs/_last.txt"
+
+    -- проверка fs
+    local has_fs = type(isfile)=="function" and type(writefile)=="function" and type(readfile)=="function" and type(isfolder)=="function" and type(makefolder)=="function" and type(listfiles)=="function"
+
+    local function ensure_dir()
+        if not has_fs then return end
+        if not isfolder(CONFIG_DIR) then
+            pcall(function() makefolder(CONFIG_DIR) end)
+        end
+    end
+
+    local function config_path(name)
+        return CONFIG_DIR .. name .. CONFIG_EXT
+    end
+
+    -- Собираем все "сохраняемые" значения из ST и SHF
+    local function snapshot()
+        local data = { _version = "v16", _time = os.time() }
+
+        -- ST — берём только числа/строки/булы
+        for k, v in pairs(ST) do
+            local t = type(v)
+            if t == "number" or t == "string" or t == "boolean" then
+                data["ST_"..k] = v
+            end
+        end
+
+        -- SHF — тоже только примитивы
+        for k, v in pairs(SHF) do
+            local t = type(v)
+            if t == "number" or t == "string" or t == "boolean" then
+                data["SHF_"..k] = v
+            elseif typeof(v) == "Color3" then
+                data["SHF_"..k] = { v.R, v.G, v.B, _c = true }
+            end
+        end
+
+        return data
+    end
+
+    -- Применяем данные обратно в ST/SHF + дёргаем uiRegistry
+    local function restore(data)
+        if type(data) ~= "table" then return false end
+
+        for k, v in pairs(data) do
+            local prefix = string.sub(k, 1, 3)
+            local real_k = string.sub(k, 4)
+
+            if prefix == "ST_" then
+                ST[real_k] = v
+            elseif prefix == "SHF_" then
+                if type(v) == "table" and v._c then
+                    SHF[real_k] = Color3.new(v[1], v[2], v[3])
+                else
+                    SHF[real_k] = v
+                end
+            end
+        end
+
+        -- обновляем UI
+        local reg = getgenv().DaDa_UIRegistry
+        if reg then
+            for flag, setter in pairs(reg) do
+                local v = nil
+                if ST[flag] ~= nil then v = ST[flag] end
+                if v == nil and SHF[flag] ~= nil then v = SHF[flag] end
+                if v ~= nil then
+                    pcall(setter, v)
+                end
+            end
+        end
+
+        return true
+    end
+
+    -- ==== API ====
+    local CFG = {}
+
+    function CFG.save(name)
+        if not has_fs then
+            if notify then notify("Config", "Нет доступа к файлам") end
+            return false
+        end
+        ensure_dir()
+        name = tostring(name or "default")
+        local data = snapshot()
+        local ok, raw = pcall(function()
+            return game:GetService("HttpService"):JSONEncode(data)
+        end)
+        if not ok or type(raw) ~= "string" then
+            if notify then notify("Config", "Ошибка encode") end
+            return false
+        end
+        local ok2 = pcall(writefile, config_path(name), raw)
+        if ok2 then
+            pcall(writefile, CONFIG_LAST, name)
+            if notify then notify("Config", "Сохранено: "..name) end
+            return true
+        else
+            if notify then notify("Config", "Не сохранилось") end
+            return false
+        end
+    end
+
+    function CFG.load(name)
+        if not has_fs then
+            if notify then notify("Config", "Нет доступа к файлам") end
+            return false
+        end
+        name = tostring(name or "default")
+        local path = config_path(name)
+        if not isfile(path) then
+            if notify then notify("Config", "Не найдено: "..name) end
+            return false
+        end
+        local ok, raw = pcall(readfile, path)
+        if not ok or type(raw) ~= "string" then
+            if notify then notify("Config", "Ошибка read") end
+            return false
+        end
+        local ok2, data = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(raw)
+        end)
+        if not ok2 or type(data) ~= "table" then
+            if notify then notify("Config", "Ошибка decode") end
+            return false
+        end
+        local ok3 = restore(data)
+        if ok3 then
+            pcall(writefile, CONFIG_LAST, name)
+            if notify then notify("Config", "Загружено: "..name) end
+            return true
+        end
+        return false
+    end
+
+    function CFG.delete(name)
+        if not has_fs then return false end
+        name = tostring(name or "")
+        local path = config_path(name)
+        if isfile(path) and type(delfile)=="function" then
+            pcall(delfile, path)
+            if notify then notify("Config", "Удалено: "..name) end
+            return true
+        end
+        return false
+    end
+
+    function CFG.list()
+        local out = {}
+        if not has_fs then return out end
+        ensure_dir()
+        local ok, files = pcall(listfiles, CONFIG_DIR)
+        if not ok or type(files) ~= "table" then return out end
+        for _, path in ipairs(files) do
+            local name = string.match(path, "([^/\\]+)"..CONFIG_EXT.."$")
+            if name then out[#out+1] = name end
+        end
+        table.sort(out)
+        return out
+    end
+
+    function CFG.last()
+        if not has_fs then return nil end
+        if isfile(CONFIG_LAST) then
+            local ok, name = pcall(readfile, CONFIG_LAST)
+            if ok and type(name) == "string" then return name end
+        end
+        return nil
+    end
+
+    function CFG.reset()
+        -- сбрасываем ST/SHF к дефолтам будет через перезапуск
+        if notify then notify("Config", "Требуется перезапуск для сброса") end
+    end
+
+    getgenv().DaDa_Config = CFG
+
+    -- авто-загрузка последнего конфига
+    task.spawn(function()
+        task.wait(3.5)  -- ждём пока пройдёт загрузочный экран
+        local last = CFG.last()
+        if last and isfile(config_path(last)) then
+            CFG.load(last)
+        end
+    end)
+end
+initConfigs()
 
 notify("DaDa v16","здраствуй воин")
 print("[DaDa v16] скрипт загружен")
