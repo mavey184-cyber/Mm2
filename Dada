@@ -3851,9 +3851,10 @@ local function initHub()
     local pingChip=makeChip(4,"0 ms",Color3.fromRGB(180,180,190))
     local fpsCount=0; local fpsLast=tick(); local pingSmooth=0; local pingSeen=false
     RunService.RenderStepped:Connect(function()
+initHub()
 
 -- ============================================================
--- INIT 17: HUB + HOTBAR
+-- INIT 17: HUB (верхняя плашка fps/ping)
 -- ============================================================
 local function initHub()
     hubGui=Instance.new("ScreenGui")
@@ -3881,6 +3882,7 @@ local function initHub()
     hubLayout.VerticalAlignment=Enum.VerticalAlignment.Center
     hubLayout.HorizontalAlignment=Enum.HorizontalAlignment.Center
     local hubPad=Instance.new("UIPadding",hub); hubPad.PaddingLeft=UDim.new(0,8); hubPad.PaddingRight=UDim.new(0,8)
+
     local function makeChip(order,text,color)
         local chip=Instance.new("Frame")
         chip.LayoutOrder=order
@@ -3899,10 +3901,12 @@ local function initHub()
         lbl.Parent=chip
         return lbl
     end
+
     makeChip(1,"DaDa v16",Color3.fromRGB(200,120,255))
     makeChip(2,(LP.DisplayName or LP.Name),Color3.fromRGB(200,180,255))
     local fpsChip=makeChip(3,"0 fps",Color3.fromRGB(180,180,190))
     local pingChip=makeChip(4,"0 ms",Color3.fromRGB(180,180,190))
+
     local fpsCount=0; local fpsLast=tick(); local pingSmooth=0; local pingSeen=false
     RunService.RenderStepped:Connect(function()
         fpsCount=fpsCount+1
@@ -3917,6 +3921,7 @@ local function initHub()
             pingChip.Text=math.floor(pingSmooth).." ms"
         end
     end)
+
     local hubDrag=false; local hubMoved=false; local hubDS; local hubSP
     hub.InputBegan:Connect(function(input)
         if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
@@ -3941,7 +3946,7 @@ end
 initHub()
 
 -- ============================================================
--- INIT 18: HOTBAR (привязан к Quick Menu — скрыт когда Quick OFF)
+-- INIT 18: HOTBAR (привязан к Quick Menu)
 -- ============================================================
 local function initHotbar()
     hotbarGui=Instance.new("ScreenGui")
@@ -3949,7 +3954,7 @@ local function initHotbar()
     hotbarGui.ResetOnSpawn=false
     hotbarGui.IgnoreGuiInset=true
     hotbarGui.DisplayOrder=98
-    hotbarGui.Enabled=false  -- ← по умолчанию СКРЫТ
+    hotbarGui.Enabled=false
     pcall(function() hotbarGui.Parent=CoreGui end)
     if not hotbarGui.Parent then hotbarGui.Parent=LP:WaitForChild("PlayerGui") end
 
@@ -4012,123 +4017,18 @@ local function initHotbar()
         end
 
         b.MouseButton1Click:Connect(toggle_hk)
-
-        -- привязка кнопки клавиатуры
         UIS.InputBegan:Connect(function(input,gpe)
             if gpe then return end
-            if not ST.quick then return end -- работает только когда Quick Menu включён
+            if not ST.quick then return end
             if input.KeyCode==Enum.KeyCode[hk.key] then toggle_hk() end
         end)
 
         hbBtns[hk.flag]=b
     end
 
-    -- ГЛАВНОЕ: хотбар виден только когда включён Quick Menu
     RunService.RenderStepped:Connect(function()
         if hotbarGui then hotbarGui.Enabled = ST.quick end
         if not ST.quick then return end
-        for _,hk in ipairs(HOTKEYS) do
-            local b=hbBtns[hk.flag]
-            if b then
-                local on=ST.quick_state[hk.flag]
-                b.TextColor3=on and Color3.fromRGB(120,220,150) or Color3.fromRGB(180,180,190)
-            end
-        end
-    end)
-end
-initHotbar()
-
--- ============================================================
--- INIT 18: HOTBAR (быстрые бинды)
--- ============================================================
-local function initHotbar()
-    hotbarGui=Instance.new("ScreenGui")
-    hotbarGui.Name="DaDaHotbar_"..math.random(1000,9999)
-    hotbarGui.ResetOnSpawn=false
-    hotbarGui.IgnoreGuiInset=true
-    hotbarGui.DisplayOrder=98
-    pcall(function() hotbarGui.Parent=CoreGui end)
-    if not hotbarGui.Parent then hotbarGui.Parent=LP:WaitForChild("PlayerGui") end
-
-    local bar=Instance.new("Frame")
-    bar.Size=UDim2.new(0,0,0,28)
-    bar.AutomaticSize=Enum.AutomaticSize.X
-    bar.Position=UDim2.new(0.5,0,1,-40)
-    bar.AnchorPoint=Vector2.new(0.5,1)
-    bar.BackgroundColor3=Color3.fromRGB(0,0,0)
-    bar.BackgroundTransparency=0.35
-    bar.BorderSizePixel=0
-    bar.Parent=hotbarGui
-    Instance.new("UICorner",bar).CornerRadius=UDim.new(0,6)
-    local barStroke=Instance.new("UIStroke",bar); barStroke.Color=Color3.fromRGB(45,45,55)
-    table.insert(themeUpdaters,function(t) barStroke.Color=t.Accent end)
-    local barList=Instance.new("UIListLayout",bar)
-    barList.FillDirection=Enum.FillDirection.Horizontal
-    barList.Padding=UDim.new(0,4)
-    barList.VerticalAlignment=Enum.VerticalAlignment.Center
-    Instance.new("UIPadding",bar).PaddingLeft=UDim.new(0,6)
-    local padR=Instance.new("UIPadding",bar); padR.PaddingRight=UDim.new(0,6)
-
-    local HOTKEYS={
-        {key="Z",flag="silent",label="Silent"},
-        {key="X",flag="esp",label="ESP"},
-        {key="C",flag="bhop",label="Bhop"},
-        {key="V",flag="fly",label="Fly"},
-        {key="B",flag="inf_jump",label="InfJump"},
-        {key="N",flag="getgun",label="GetGun"},
-    }
-    local hbBtns={}
-    for i,hk in ipairs(HOTKEYS) do
-        local b=Instance.new("TextButton")
-        b.Size=UDim2.new(0,54,1,-6)
-        b.BackgroundColor3=Color3.fromRGB(20,20,25)
-        b.BackgroundTransparency=0.4
-        b.Text="["..hk.key.."] "..hk.label
-        b.TextColor3=Color3.fromRGB(180,180,190)
-        b.TextSize=9
-        b.Font=Enum.Font.GothamBold
-        b.LayoutOrder=i
-        b.Parent=bar
-        Instance.new("UICorner",b).CornerRadius=UDim.new(0,4)
-        table.insert(themeUpdaters,function(t) b.BackgroundColor3=t.Element end)
-        b.MouseButton1Click:Connect(function()
-            local on=not ST.quick_state[hk.flag]
-            ST.quick_state[hk.flag]=on
-            if hk.flag=="silent" then
-                SL.enabled=on
-                if on then task.spawn(function() pcall(SL_installHooks); pcall(SL_refresh) end)
-                else if _G.DaDa_SL_restore_origin then pcall(_G.DaDa_SL_restore_origin) end end
-            elseif hk.flag=="esp" then ST.esp_on=on
-            elseif hk.flag=="bhop" then ST.bhop=on
-            elseif hk.flag=="fly" then ST.fly=on
-            elseif hk.flag=="inf_jump" then ST.inf_jump=on
-            elseif hk.flag=="getgun" then ST.getgun=on end
-            local reg=getgenv().DaDa_UIRegistry
-            if reg and reg[hk.flag] then pcall(reg[hk.flag],on) end
-        end)
-        hbBtns[hk.flag]=b
-    end
-    UIS.InputBegan:Connect(function(input,gpe)
-        if gpe then return end
-        for _,hk in ipairs(HOTKEYS) do
-            if input.KeyCode==Enum.KeyCode[hk.key] then
-                local on=not ST.quick_state[hk.flag]
-                ST.quick_state[hk.flag]=on
-                if hk.flag=="silent" then
-                    SL.enabled=on
-                    if on then task.spawn(function() pcall(SL_installHooks); pcall(SL_refresh) end)
-                    else if _G.DaDa_SL_restore_origin then pcall(_G.DaDa_SL_restore_origin) end end
-                elseif hk.flag=="esp" then ST.esp_on=on
-                elseif hk.flag=="bhop" then ST.bhop=on
-                elseif hk.flag=="fly" then ST.fly=on
-                elseif hk.flag=="inf_jump" then ST.inf_jump=on
-                elseif hk.flag=="getgun" then ST.getgun=on end
-                local reg=getgenv().DaDa_UIRegistry
-                if reg and reg[hk.flag] then pcall(reg[hk.flag],on) end
-            end
-        end
-    end)
-    RunService.RenderStepped:Connect(function()
         for _,hk in ipairs(HOTKEYS) do
             local b=hbBtns[hk.flag]
             if b then
@@ -4194,7 +4094,7 @@ getgenv().DADA_UNLOAD=function()
 end
 
 -- ============================================================
--- INIT 21: LOADER GUARD (защита от повторного запуска)
+-- INIT 21: LOADER GUARD
 -- ============================================================
 do
     if getgenv().DaDa_LOADED then
@@ -4204,8 +4104,5 @@ do
     getgenv().DaDa_LOADED=true
 end
 
--- ============================================================
--- СТАРТ
--- ============================================================
 notify("DaDa v16","здраствуй воин")
 print("[DaDa v16] скрипт загружен")
