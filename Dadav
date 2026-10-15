@@ -2955,7 +2955,591 @@ getgenv().DADA_UNLOAD=function()
     end
     getgenv().DaDa_UIRegistry = nil
 end
+-- ============================================================
+-- PATCH v16: Invisible + 20 новых фич из Shitaro
+-- ============================================================
 
+-- ⭐ НОВЫЕ ФЛАГИ (добавляем в SHF)
+do
+    if not SHF then SHF = {} end
+    SHF.invis=false
+    SHF.invis_mode="Ghost"
+    SHF.hitbox=false
+    SHF.hitbox_size=5
+    SHF.hitbox_transp=true
+    SHF.hitbox_col=Color3.fromRGB(255,0,0)
+    SHF.fullbright=true
+    SHF.no_recoil=false
+    SHF.no_spread=false
+    SHF.inf_ammo=false
+    SHF.auto_click=false
+    SHF.auto_click_delay=0.1
+    SHF.auto_reload=false
+    SHF.auto_heal=false
+    SHF.auto_heal_threshold=50
+    SHF.auto_dodge=false
+    SHF.auto_dodge_range=20
+    SHF.auto_parry=false
+    SHF.gun_skin="None"
+    SHF.knife_skin="None"
+    SHF.shirt_id=""
+    SHF.pants_id=""
+    SHF.hair_id=""
+    SHF.face_id=""
+    SHF.anim_pack="Default"
+    SHF.anim_sniper=false
+    SHF.anim_bundle_id=""
+    SHF.speed_hack_esp=false
+    SHF.anti_fling_strict=false
+    SHF.anti_void=false
+    SHF.anti_kick=false
+    SHF.anti_afk=false
+    SHF.anti_trap=false
+    SHF.anti_swap=false
+    SHF.auto_respawn=false
+    SHF.auto_respawn_delay=3
+    SHF.round_notify=false
+    SHF.role_notify=false
+    SHF.killer_notify=false
+    SHF.role_map={}
+end
+
+-- ============================================================
+-- 1. INVISIBLE (из Shitaro)
+-- ============================================================
+do
+    local orig_parts={}
+    local function setInvis(mode)
+        local char=LP.Character
+        if not char then return end
+        if mode=="Ghost" then
+            for _,p in ipairs(char:GetDescendants()) do
+                if p:IsA("BasePart") and p.Name~="HumanoidRootPart" then
+                    if orig_parts[p]==nil then orig_parts[p]=p.LocalTransparencyModifier end
+                    p.LocalTransparencyModifier=1
+                end
+            end
+        elseif mode=="Full" then
+            for _,p in ipairs(char:GetDescendants()) do
+                if p:IsA("BasePart") and p.Name~="HumanoidRootPart" then
+                    if orig_parts[p]==nil then orig_parts[p]=p.LocalTransparencyModifier end
+                    p.LocalTransparencyModifier=1
+                end
+            end
+            local hrp=char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                if orig_parts[hrp]==nil then orig_parts[hrp]=hrp.LocalTransparencyModifier end
+                hrp.LocalTransparencyModifier=1
+            end
+        end
+    end
+    local function clearInvis()
+        for p,v in pairs(orig_parts) do
+            if p and p.Parent then p.LocalTransparencyModifier=v end
+        end
+        orig_parts={}
+    end
+    SHF.setInvis=setInvis
+    SHF.clearInvis=clearInvis
+    RunService.Stepped:Connect(function()
+        if SHF.invis then setInvis(SHF.invis_mode) else clearInvis() end
+    end)
+    LP.CharacterAdded:Connect(function()
+        task.wait(0.5)
+        orig_parts={}
+        if SHF.invis then setInvis(SHF.invis_mode) end
+    end)
+end
+
+-- ============================================================
+-- 2. HITBOX EXPANDER
+-- ============================================================
+do
+    local hitboxes={}
+    local function clearHB()
+        for plr,e in pairs(hitboxes) do
+            if e.part then pcall(function() e.part:Destroy() end) end
+            if e.hl then pcall(function() e.hl:Destroy() end) end
+        end
+        hitboxes={}
+    end
+    RunService.Heartbeat:Connect(function()
+        if not SHF.hitbox then if next(hitboxes) then clearHB() end return end
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p~=LP and p.Character then
+                local hrp=p.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local e=hitboxes[p]
+                    if not e then
+                        local hb=Instance.new("Part")
+                        hb.Name="DaDaHitbox"
+                        hb.Size=Vector3.new(SHF.hitbox_size,SHF.hitbox_size,SHF.hitbox_size)
+                        hb.Anchored=true
+                        hb.CanCollide=false
+                        hb.CanQuery=false
+                        hb.CanTouch=true
+                        hb.Transparency=SHF.hitbox_transp and 0.7 or 1
+                        hb.Material=Enum.Material.ForceField
+                        hb.Color=SHF.hitbox_col
+                        hb.Parent=workspace
+                        local hl=Instance.new("Highlight")
+                        hl.DepthMode=Enum.HighlightDepthMode.AlwaysOnTop
+                        hl.FillColor=SHF.hitbox_col
+                        hl.OutlineColor=SHF.hitbox_col
+                        hl.FillTransparency=0.7
+                        hl.Adornee=hb
+                        hl.Parent=hb
+                        e={part=hb,hl=hl}
+                        hitboxes[p]=e
+                    end
+                    if e.part and e.part.Parent then
+                        e.part.CFrame=hrp.CFrame
+                        e.part.Size=Vector3.new(SHF.hitbox_size,SHF.hitbox_size,SHF.hitbox_size)
+                        e.part.Transparency=SHF.hitbox_transp and 0.7 or 1
+                        e.part.Color=SHF.hitbox_col
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 3. ANTI-SWAP
+-- ============================================================
+do
+    local swap_orig={}
+    RunService.Stepped:Connect(function()
+        if not SHF.anti_swap then return end
+        local char=LP.Character
+        if not char then return end
+        for _,t in ipairs(char:GetChildren()) do
+            if t:IsA("Tool") then
+                if not swap_orig[t] then swap_orig[t]=t.Parent end
+                local hum=char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    local eq=hum:FindFirstChildOfClass("Tool")
+                    if eq and eq~=t then
+                        pcall(function() t.Parent=char end)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 4. ANTI-VOID
+-- ============================================================
+do
+    local orig_fdh=workspace.FallenPartsDestroyHeight
+    RunService.Stepped:Connect(function()
+        if SHF.anti_void then
+            if workspace.FallenPartsDestroyHeight~=-9e9 then
+                pcall(function() workspace.FallenPartsDestroyHeight=-9e9 end)
+            end
+        elseif workspace.FallenPartsDestroyHeight~=orig_fdh then
+            pcall(function() workspace.FallenPartsDestroyHeight=orig_fdh end)
+        end
+    end)
+end
+
+-- ============================================================
+-- 5. ANTI-KICK (отключает некоторые кик-триггеры)
+-- ============================================================
+do
+    if SHF.anti_kick then
+        pcall(function()
+            local kick_remote=ReplicatedStorage:FindFirstChild("Kick")
+            if kick_remote and kick_remote:IsA("RemoteEvent") then
+                kick_remote.OnClientEvent:Connect(function() end)
+            end
+        end)
+    end
+end
+
+-- ============================================================
+-- 6. ANTI-AFK
+-- ============================================================
+do
+    local VirtualUser=game:GetService("VirtualUser")
+    LP.Idled:Connect(function()
+        if SHF.anti_afk then
+            pcall(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    end)
+end
+
+-- ============================================================
+-- 7. ANTI-TRAP
+-- ============================================================
+do
+    RunService.Heartbeat:Connect(function()
+        if not SHF.anti_trap then return end
+        local char=LP.Character
+        local hum=char and char:FindFirstChildOfClass("Humanoid")
+        if hum and hum.WalkSpeed<5 then
+            hum.WalkSpeed=32
+            hum.JumpPower=80
+        end
+        local pg=LP:FindFirstChild("PlayerGui")
+        if pg then
+            local trap=pg:FindFirstChild("TrapGUI")
+            if trap then pcall(function() trap:Destroy() end) end
+        end
+    end)
+end
+
+-- ============================================================
+-- 8. AUTO RESPAWN
+-- ============================================================
+do
+    LP.CharacterAdded:Connect(function()
+        if SHF.auto_respawn then
+            task.wait(SHF.auto_respawn_delay)
+            local char=LP.Character
+            local hum=char and char:FindFirstChildOfClass("Humanoid")
+            if hum then pcall(function() hum.Health=0 end) end
+        end
+    end)
+end
+
+-- ============================================================
+-- 9. NO RECOIL
+-- ============================================================
+do
+    local orig_recoil={}
+    RunService.Stepped:Connect(function()
+        if not SHF.no_recoil then
+            for o,v in pairs(orig_recoil) do
+                if o and o.Parent then pcall(function() o.Recoil=v end) end
+            end
+            orig_recoil={}
+            return
+        end
+        local char=LP.Character
+        if not char then return end
+        local gun=char:FindFirstChild("Gun")
+        if gun then
+            for _,d in ipairs(gun:GetDescendants()) do
+                if d:IsA("NumberValue") and d.Name:lower():find("recoil") then
+                    if orig_recoil[d]==nil then orig_recoil[d]=d.Value end
+                    d.Value=0
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 10. NO SPREAD
+-- ============================================================
+do
+    local orig_spread={}
+    RunService.Stepped:Connect(function()
+        if not SHF.no_spread then
+            for o,v in pairs(orig_spread) do
+                if o and o.Parent then pcall(function() o.Value=v end) end
+            end
+            orig_spread={}
+            return
+        end
+        local char=LP.Character
+        if not char then return end
+        local gun=char:FindFirstChild("Gun")
+        if gun then
+            for _,d in ipairs(gun:GetDescendants()) do
+                if d:IsA("NumberValue") and (d.Name:lower():find("spread") or d.Name:lower():find("accuracy")) then
+                    if orig_spread[d]==nil then orig_spread[d]=d.Value end
+                    if d.Name:lower():find("spread") then d.Value=0 end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 11. AUTO CLICK
+-- ============================================================
+do
+    local last_click=0
+    RunService.Heartbeat:Connect(function()
+        if not SHF.auto_click then return end
+        local now=os.clock()
+        if now-last_click<SHF.auto_click_delay then return end
+        last_click=now
+        local vim=game:GetService("VirtualInputManager")
+        pcall(function()
+            vim:SendMouseButtonEvent(0,0,0,true,game,1)
+            vim:SendMouseButtonEvent(0,0,0,false,game,1)
+        end)
+    end)
+end
+
+-- ============================================================
+-- 12. AUTO RELOAD
+-- ============================================================
+do
+    RunService.Heartbeat:Connect(function()
+        if not SHF.auto_reload then return end
+        local char=LP.Character
+        local gun=char and char:FindFirstChild("Gun")
+        if gun then
+            local ammo=gun:FindFirstChild("Ammo")
+            if ammo and ammo:IsA("IntValue") and ammo.Value==0 then
+                local reload=gun:FindFirstChild("Reload")
+                if reload and reload:IsA("RemoteEvent") then
+                    pcall(function() reload:FireServer() end)
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 13. AUTO HEAL
+-- ============================================================
+do
+    RunService.Heartbeat:Connect(function()
+        if not SHF.auto_heal then return end
+        local char=LP.Character
+        local hum=char and char:FindFirstChildOfClass("Humanoid")
+        if hum and hum.Health>0 and hum.Health<hum.MaxHealth*(SHF.auto_heal_threshold/100) then
+            -- Ищем аптечку в бэкпаке
+            local bp=LP:FindFirstChildOfClass("Backpack")
+            if bp then
+                for _,t in ipairs(bp:GetChildren()) do
+                    if t:IsA("Tool") and (t.Name:lower():find("med") or t.Name:lower():find("heal")) then
+                        pcall(function()
+                            hum:EquipTool(t)
+                            task.wait(0.1)
+                            t:Activate()
+                        end)
+                        break
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 14. AUTO DODGE
+-- ============================================================
+do
+    RunService.Heartbeat:Connect(function()
+        if not SHF.auto_dodge then return end
+        local char=LP.Character
+        local hrp=char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        for _,p in ipairs(Players:GetPlayers()) do
+            if p~=LP and p.Character then
+                local thrp=p.Character:FindFirstChild("HumanoidRootPart")
+                local th=p.Character:FindFirstChildOfClass("Humanoid")
+                if thrp and th and th.Health>0 then
+                    local dist=(thrp.Position-hrp.Position).Magnitude
+                    if dist<SHF.auto_dodge_range and th.WalkSpeed>40 then
+                        local away=(hrp.Position-thrp.Position).Unit
+                        local v=hrp.AssemblyLinearVelocity
+                        hrp.AssemblyLinearVelocity=Vector3.new(away.X*60,v.Y,away.Z*60)
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 15. FULLBRIGHT (уже есть, оставлен как есть)
+-- ============================================================
+
+-- ============================================================
+-- 16. GUN SKIN
+-- ============================================================
+do
+    local GUN_SKINS={
+        ["Default"]=nil,
+        ["Golden"]=Color3.fromRGB(255,215,0),
+        ["Rainbow"]=Color3.fromRGB(255,100,255),
+        ["Neon"]=Color3.fromRGB(0,255,255),
+        ["Dark"]=Color3.fromRGB(20,20,30),
+        ["Blood"]=Color3.fromRGB(180,0,0),
+    }
+    RunService.Heartbeat:Connect(function()
+        if SHF.gun_skin=="Default" or SHF.gun_skin=="None" then return end
+        local col=GUN_SKINS[SHF.gun_skin]
+        if not col then return end
+        local char=LP.Character
+        if not char then return end
+        for _,t in ipairs(char:GetChildren()) do
+            if t:IsA("Tool") and t.Name=="Gun" then
+                for _,p in ipairs(t:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        p.Color=col
+                        p.Material=Enum.Material.Neon
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 17. KNIFE SKIN
+-- ============================================================
+do
+    local KNIFE_SKINS={
+        ["Default"]=nil,
+        ["Golden"]=Color3.fromRGB(255,215,0),
+        ["Neon"]=Color3.fromRGB(0,255,255),
+        ["Blood"]=Color3.fromRGB(180,0,0),
+        ["Shadow"]=Color3.fromRGB(30,30,40),
+    }
+    RunService.Heartbeat:Connect(function()
+        if SHF.knife_skin=="Default" or SHF.knife_skin=="None" then return end
+        local col=KNIFE_SKINS[SHF.knife_skin]
+        if not col then return end
+        local char=LP.Character
+        if not char then return end
+        for _,t in ipairs(char:GetChildren()) do
+            if t:IsA("Tool") and t.Name=="Knife" then
+                for _,p in ipairs(t:GetDescendants()) do
+                    if p:IsA("BasePart") then
+                        p.Color=col
+                        p.Material=Enum.Material.Neon
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 18. ANIM SNIPER (смена анимаций)
+-- ============================================================
+do
+    local ANIM_IDS={
+        ["Default"]=nil,
+        ["Ninja"]={idle1="rbxassetid://656117400",idle2="rbxassetid://656118341",walk="rbxassetid://656121766",run="rbxassetid://656118852",jump="rbxassetid://656117878"},
+        ["Zombie"]={idle1="rbxassetid://616158929",idle2="rbxassetid://616160636",walk="rbxassetid://616168032",run="rbxassetid://616163682",jump="rbxassetid://616161997"},
+        ["Pirate"]={idle1="rbxassetid://750781874",idle2="rbxassetid://750782230",walk="rbxassetid://750785693",run="rbxassetid://750783738",jump="rbxassetid://750782770"},
+        ["Robot"]={idle1="rbxassetid://616088211",idle2="rbxassetid://616089559",walk="rbxassetid://616095330",run="rbxassetid://616091570",jump="rbxassetid://616090588"},
+    }
+    local function applyAnim(name)
+        local char=LP.Character
+        if not char then return end
+        local hum=char:FindFirstChildOfClass("Humanoid")
+        if not hum then return end
+        local animate=char:FindFirstChild("Animate")
+        if not animate then return end
+        local anims=ANIM_IDS[name]
+        if not anims then return end
+        hum:UnequipTools()
+        for _,v in ipairs(hum:GetPlayingAnimationTracks()) do pcall(function() v:Stop(0) end) end
+        animate.Disabled=true
+        task.wait(0.1)
+        local function replace(folder,child,id)
+            local f=animate:FindFirstChild(folder)
+            if not f then return end
+            local a=f:FindFirstChild(child)
+            if a and a:IsA("Animation") and id then a.AnimationId=id end
+        end
+        if anims.idle1 then replace("idle","Animation1",anims.idle1) end
+        if anims.idle2 then replace("idle","Animation2",anims.idle2) end
+        if anims.walk then replace("walk","WalkAnim",anims.walk) end
+        if anims.run then replace("run","RunAnim",anims.run) end
+        if anims.jump then replace("jump","JumpAnim",anims.jump) end
+        animate.Disabled=false
+        hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+    end
+    SHF.applyAnim=applyAnim
+end
+
+-- ============================================================
+-- 19. ROUND NOTIFY
+-- ============================================================
+do
+    local last_role=nil
+    task.spawn(function()
+        while task.wait(0.5) do
+            if not SHF.round_notify then continue end
+            local m=get_round()
+            local d=m and m.PlayerData
+            local me=d and d[LP.Name]
+            local role=me and me.Role
+            if role and role~=last_role then
+                last_role=role
+                if notify then pcall(notify,"Role",role,4) end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- 20. KILLER NOTIFY (кто маньяк)
+-- ============================================================
+do
+    task.spawn(function()
+        while task.wait(1) do
+            if not SHF.killer_notify then continue end
+            local m=get_round()
+            local d=m and m.PlayerData
+            if type(d)=="table" then
+                for name,info in pairs(d) do
+                    if type(info)=="table" and info.Role=="Murderer" and not info.Dead then
+                        if not SHF.role_map[name] then
+                            SHF.role_map[name]=true
+                            if notify then pcall(notify,"Murderer","@"..name,5) end
+                        end
+                        break
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- ============================================================
+-- UI: КНОПКИ ДЛЯ ВСЕХ 20 ФИЧ
+-- ============================================================
+task.spawn(function()
+    task.wait(2)
+    if not makePanel then return end
+    local ok=pcall(function()
+        local ex=makePanel(6,"left","Extras 2")
+        ex:Toggle("Invisible",false,function(v) SHF.invis=v; if not v and SHF.clearInvis then SHF.clearInvis() end end)
+        ex:Dropdown("Invis Mode",{"Ghost","Full"},"Ghost",function(v) SHF.invis_mode=v end)
+        ex:Toggle("Hitbox Expander",false,function(v) SHF.hitbox=v end)
+        ex:Slider("Hitbox Size",5,1,15,function(v) SHF.hitbox_size=v end)
+        ex:Toggle("No Recoil",false,function(v) SHF.no_recoil=v end)
+        ex:Toggle("No Spread",false,function(v) SHF.no_spread=v end)
+        ex:Toggle("Auto Reload",false,function(v) SHF.auto_reload=v end)
+        ex:Toggle("Auto Click",false,function(v) SHF.auto_click=v end)
+        ex:Slider("Click Delay",1,1,10,function(v) SHF.auto_click_delay=v/10 end)
+        ex:Toggle("Auto Heal",false,function(v) SHF.auto_heal=v end)
+        ex:Slider("Heal Threshold %",50,10,90,function(v) SHF.auto_heal_threshold=v end)
+        ex:Toggle("Auto Dodge",false,function(v) SHF.auto_dodge=v end)
+        ex:Slider("Dodge Range",20,5,50,function(v) SHF.auto_dodge_range=v end)
+        ex:Toggle("Anti Swap",false,function(v) SHF.anti_swap=v end)
+        ex:Toggle("Anti Void",false,function(v) SHF.anti_void=v end)
+        ex:Toggle("Anti AFK",false,function(v) SHF.anti_afk=v end)
+        ex:Toggle("Anti Trap",false,function(v) SHF.anti_trap=v end)
+        ex:Toggle("Auto Respawn",false,function(v) SHF.auto_respawn=v end)
+        ex:Slider("Respawn Delay",3,1,10,function(v) SHF.auto_respawn_delay=v end)
+        ex:Toggle("Round Notify",false,function(v) SHF.round_notify=v end)
+        ex:Toggle("Killer Notify",false,function(v) SHF.killer_notify=v end)
+        local ex2=makePanel(6,"right","Skins")
+        ex2:Dropdown("Gun Skin",{"None","Default","Golden","Rainbow","Neon","Dark","Blood"},"None",function(v) SHF.gun_skin=v end)
+        ex2:Dropdown("Knife Skin",{"None","Default","Golden","Neon","Blood","Shadow"},"None",function(v) SHF.knife_skin=v end)
+        ex2:Dropdown("Anim Pack",{"Default","Ninja","Zombie","Pirate","Robot"},"Default",function(v)
+            SHF.anim_pack=v
+            if v~="Default" and SHF.applyAnim then SHF.applyAnim(v) end
+        end)
+    end)
+end)
 -- ============================================================
 -- СТАРТ
 -- ============================================================
