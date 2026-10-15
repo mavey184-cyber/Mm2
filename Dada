@@ -3851,30 +3851,7 @@ local function initHub()
     local pingChip=makeChip(4,"0 ms",Color3.fromRGB(180,180,190))
     local fpsCount=0; local fpsLast=tick(); local pingSmooth=0; local pingSeen=false
     RunService.RenderStepped:Connect(function()
-        fpsCount=fpsCount+1
-        local t=tick()
-        if t-fpsLast>=0.1 then
-            local fps=math.floor(fpsCount/(t-fpsLast))
-            fpsCount=0; fpsLast=t
-            fpsChip.Text=fps.." fps"
-            local ping=0
-            pcall(function() ping=math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
-            if pingSeen then pingSmooth=pingSmooth*0.7+ping*0.3 else pingSmooth=ping; pingSeen=true end
-            pingChip.Text=math.floor(pingSmooth).." ms"
-        end
-    end)
-    local hubDrag=false; local hubMoved=false; local hubDS; local hubSP
-    hub.InputBegan:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-            hubDrag=true; hubMoved=false; hubDS=input.Position; hubSP=hub.Position
-        end
-    end)
-    UIS.InputChanged:Connect(function(input)
-        if not hubDrag then return end
-        if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
-            local delta=input.Position-hubDS
-            if delta.Magnitude>5 then hubMoved=true end
-            hub.Position=UDim2.new(hubSP.X.Scale,hubSP.X.Offset+delta.X,hubSP.Y.Scale,hubSP.Y.Offset+delta.Y)
+
 -- ============================================================
 -- INIT 17: HUB + HOTBAR
 -- ============================================================
