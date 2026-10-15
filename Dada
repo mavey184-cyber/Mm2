@@ -3221,17 +3221,22 @@ local function initMenu()
     cD:Slider("Kill Distance",30,5,60,function(v) ST.killaura_dist=v end)
 
     -- fling
-local fA=makePanel(2,"left","Fling Pro")
+local fA=makePanel(2,"left","Fling")
 
 fA:Toggle("Fling On",false,function(v)
-    SHF.fling_pro.set_on(v)
+    if not SHF.fling_mini then
+        notify("Fling","Ошибка: fling_mini не инициализирован")
+        return
+    end
+    SHF.fling_mini.set_on(v)
+    notify("Fling", v and "ON" or "OFF")
 end)
 
-fA:Dropdown("Mode",{"killer","murderer","sheriff","all","target"},"killer",function(v)
-    SHF.fling_pro.set_mode(v)
+fA:Dropdown("Mode",{"killer","murderer","sheriff","all","target"},"murderer",function(v)
+    if SHF.fling_mini then SHF.fling_mini.set_mode(v) end
 end)
 
--- динамический таргет: клик по строке — циклит по игрокам
+-- выбор игрока
 local targetRow = Instance.new("TextButton")
 targetRow.Size = UDim2.new(1,0,0,20)
 targetRow.BackgroundColor3 = BG_ROW
@@ -3244,38 +3249,36 @@ targetRow.Parent = fA.body
 Instance.new("UICorner", targetRow).CornerRadius = UDim.new(0,4)
 
 local tList, tIdx = {}, 0
-local function refresh_t()
+targetRow.MouseButton1Click:Connect(function()
     tList = {}
     for _,p in ipairs(Players:GetPlayers()) do
         if p ~= LP then
             tList[#tList+1] = { name = p.Name, disp = p.DisplayName or p.Name }
         end
     end
-end
-
-targetRow.MouseButton1Click:Connect(function()
-    refresh_t()
     if #tList == 0 then
         targetRow.Text = "Target: no players"
         return
     end
     tIdx = tIdx % #tList + 1
     local t = tList[tIdx]
-    SHF.fling_pro.set_target(t.name)
-    SHF.fling_pro.set_mode("target")
+    if SHF.fling_mini then
+        SHF.fling_mini.set_target(t.name)
+        SHF.fling_mini.set_mode("target")
+    end
     targetRow.Text = "Target: "..t.disp
 end)
 
-fA:Slider("Duration",2,1,5,function(v) SHF.fling_pro.set_duration(v) end)
-fA:Slider("Delay",15,1,50,function(v) SHF.fling_pro.set_delay(v/100) end)
-fA:Toggle("Bypass Velocity",false,function(v) SHF.fling_pro.set_bypass(v) end)
+fA:Slider("Duration",2,1,5,function(v) if SHF.fling_mini then SHF.fling_mini.set_duration(v) end end)
+fA:Slider("Delay",15,1,50,function(v) if SHF.fling_mini then SHF.fling_mini.set_delay(v/100) end end)
+fA:Toggle("Bypass Velocity",false,function(v) if SHF.fling_mini then SHF.fling_mini.set_bypass(v) end end)
 
 fA:Toggle("Anti-Fling",false,function(v)
     ST.antifling = v
 end)
 
 fA:Button("Clear Target",function()
-    SHF.fling_pro.set_target(nil)
+    if SHF.fling_mini then SHF.fling_mini.set_target(nil) end
     targetRow.Text = "Target: none"
 end)
 
