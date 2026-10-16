@@ -4981,10 +4981,66 @@ local function initConfigs()
     end)
 end
 initConfigs()
-mB:Toggle("Double Jump",false,function(v)
-    if getgenv().DADA_DOUBLEJUMP_TOGGLE then
-        getgenv().DADA_DOUBLEJUMP_TOGGLE(v)
+-- ============================================================
+-- INIT 24: DOUBLE JUMP (FIXED)
+-- ============================================================
+do
+    local UIS = game:GetService("UserInputService")
+    local Players = game:GetService("Players")
+
+    local player = Players.LocalPlayer
+    local character
+    local humanoid
+
+    local enabled = false
+    local jumps = 0
+    local maxJumps = 2
+    local jumpTick = tick()
+
+    local function onCharacterAdded(newCharacter)
+        character = newCharacter
+        humanoid = character:WaitForChild("Humanoid")
+
+        jumps = 0
+        jumpTick = tick()
+
+        humanoid.StateChanged:Connect(function(_, new)
+            if new == Enum.HumanoidStateType.Landed
+            or new == Enum.HumanoidStateType.Running
+            or new == Enum.HumanoidStateType.RunningNoPhysics then
+                jumps = 0
+            end
+        end)
     end
-end)
+
+    UIS.JumpRequest:Connect(function()
+        if not enabled then return end
+        if not humanoid or humanoid.Health <= 0 then return end
+
+        -- ФИКС: прыжок работает ТОЛЬКО если мы в воздухе (Freefall)
+        local state = humanoid:GetState()
+        if state ~= Enum.HumanoidStateType.Freefall then
+            return
+        end
+
+        if jumps < maxJumps and tick() - jumpTick > 0.2 then
+            jumpTick = tick()
+            jumps += 1
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+
+    player.CharacterAdded:Connect(onCharacterAdded)
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+
+    getgenv().DADA_DOUBLEJUMP_TOGGLE = function(v)
+        enabled = v and true or false
+        if not enabled then
+            jumps = 0
+        end
+    end
+end
 notify("DaDa v16 FIXED","здраствуй воин")
 print("[DaDa v16 FIXED] скрипт загружен")
