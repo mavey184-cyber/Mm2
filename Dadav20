@@ -1797,20 +1797,19 @@ initFarmFling()
 local function initFlingMini()
     ST.fling_mini = ST.fling_mini or {
         on = false,
-        mode = "murderer",   -- murderer / sheriff / killer / target / all
+        mode = "murderer",
         target = nil,
         bypass_vel = false,
         delay = 0.15,
         duration = 2.5,
     }
-    ST.fling_bypass_vel = false
     ST.fling_active = false
     ST.fling_killer_name = ST.fling_killer_name or nil
 
     getgenv().DaDa_OldPos = nil
     getgenv().DaDa_FPDH = workspace.FallenPartsDestroyHeight
 
-    -- === ПОИСК ЦЕЛИ ===
+    -- === ХЕЛПЕРЫ ===
     local function hasKnife(plr)
         local ch = plr and plr.Character
         local bp = plr and plr:FindFirstChildOfClass("Backpack")
@@ -1826,6 +1825,7 @@ local function initFlingMini()
         return false
     end
 
+    -- === ПОИСК ЦЕЛИ ===
     local function findTarget()
         local mode = ST.fling_mini.mode
         if mode == "target" and ST.fling_mini.target then
@@ -1838,11 +1838,9 @@ local function initFlingMini()
             if p and p ~= LP and p.Character then return p end
             return nil
         end
-
         local best, bestScore = nil, math.huge
         local myRoot = get_hrp()
         local origin = myRoot and myRoot.Position or Vector3.zero
-
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr ~= LP and plr.Character then
                 local hum = plr.Character:FindFirstChildOfClass("Humanoid")
@@ -1851,8 +1849,7 @@ local function initFlingMini()
                     local ok = false
                     if mode == "murderer" then ok = hasKnife(plr)
                     elseif mode == "sheriff" then ok = hasGun(plr) and not hasKnife(plr)
-                    elseif mode == "all" then ok = true
-                    end
+                    elseif mode == "all" then ok = true end
                     if ok then
                         local d = (root.Position - origin).Magnitude
                         local score = d
@@ -1893,12 +1890,13 @@ local function initFlingMini()
 
         local flingPart = tHead or tAccHandle or tRoot
         if not flingPart then
-            if notify then notify("Fling", plr.Name .. " — нет части для флинга") end
+            if notify then notify("Fling", plr.Name .. " — нет части") end
             return
         end
 
         ST.fling_active = true
 
+        local old_fpdh = workspace.FallenPartsDestroyHeight
         pcall(function() workspace.FallenPartsDestroyHeight = 0 / 0 end)
 
         local bv = Instance.new("BodyVelocity")
@@ -1906,53 +1904,63 @@ local function initFlingMini()
         bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
         bv.Parent = hrp
 
-        hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-
-        workspace.CurrentCamera.CameraSubject = flingPart
+        pcall(function() hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false) end)
+        pcall(function() workspace.CurrentCamera.CameraSubject = flingPart end)
 
         local endTime = tick() + (ST.fling_mini.duration or 2.5)
         local spin = 0
-        while tick() < endTime and ST.fling_active do
-            if not hrp.Parent or not tHum or not flingPart.Parent then break end
 
-            local vel = flingPart.AssemblyLinearVelocity
-            local moveDir = tHum.MoveDirection
-            local walkSpeed = tHum.WalkSpeed
+        local ok, err = pcall(function()
+            while tick() < endTime and ST.fling_active do
+                if not hrp.Parent or not tHum or not flingPart.Parent then break end
+                if not ST.fling_mini.on then break end
 
-            if vel.Magnitude >= 40 then
-                local up = CFrame.new(moveDir.X * walkSpeed * 0.12, 3, moveDir.Z * walkSpeed * 0.12)
-                local down = CFrame.new(-moveDir.X * walkSpeed * 0.06, -3, -moveDir.Z * walkSpeed * 0.06)
+                local vel = flingPart.AssemblyLinearVelocity
+                local moveDir = tHum.MoveDirection
+                local walkSpeed = tHum.WalkSpeed
 
-                hrp.CFrame = CFrame.new(flingPart.Position) * up * CFrame.Angles(math.pi / 2, 0, 0)
-                pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
+                if vel.Magnitude >= 40 then
+                    local up = CFrame.new(moveDir.X * walkSpeed * 0.12, 3, moveDir.Z * walkSpeed * 0.12)
+                    local down = CFrame.new(-moveDir.X * walkSpeed * 0.06, -3, -moveDir.Z * walkSpeed * 0.06)
+
+                    hrp.CFrame = CFrame.new(flingPart.Position) * up * CFrame.Angles(math.pi / 2, 0, 0)
+                    pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
+                    hrp.AssemblyLinearVelocity = Vector3.new(9e7, 9e8, 9e7)
+                    task.wait()
+
+                    hrp.CFrame = CFrame.new(flingPart.Position) * down
+                    pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
+                    hrp.AssemblyLinearVelocity = Vector3.new(9e7, 9e8, 9e7)
+                    task.wait()
+                else
+                    spin = spin + 100
+                    local offset1 = CFrame.new(0, 1.5, 0) + moveDir * (vel.Magnitude / 1.25)
+                    local offset2 = CFrame.new(0, -1.5, 0) + moveDir * (vel.Magnitude / 1.25)
+
+                    hrp.CFrame = CFrame.new(flingPart.Position) * offset1 * CFrame.Angles(math.rad(spin), 0, 0)
+                    pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
+                    task.wait()
+
+                    hrp.CFrame = CFrame.new(flingPart.Position) * offset2 * CFrame.Angles(math.rad(spin), 0, 0)
+                    pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
+                    task.wait()
+                end
+
                 hrp.AssemblyLinearVelocity = Vector3.new(9e7, 9e8, 9e7)
-                task.wait()
-
-                hrp.CFrame = CFrame.new(flingPart.Position) * down
-                pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
-                hrp.AssemblyLinearVelocity = Vector3.new(9e7, 9e8, 9e7)
-                task.wait()
-            else
-                spin = spin + 100
-                local offset1 = CFrame.new(0, 1.5, 0) + moveDir * (vel.Magnitude / 1.25)
-                local offset2 = CFrame.new(0, -1.5, 0) + moveDir * (vel.Magnitude / 1.25)
-
-                hrp.CFrame = CFrame.new(flingPart.Position) * offset1 * CFrame.Angles(math.rad(spin), 0, 0)
-                pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
-                task.wait()
-
-                hrp.CFrame = CFrame.new(flingPart.Position) * offset2 * CFrame.Angles(math.rad(spin), 0, 0)
-                pcall(function() char:SetPrimaryPartCFrame(hrp.CFrame) end)
-                task.wait()
+                hrp.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
             end
+        end)
 
-            hrp.AssemblyLinearVelocity = Vector3.new(9e7, 9e8, 9e7)
-            hrp.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+        if not ok then
+            warn("[Fling] Error:", err)
         end
 
-        bv:Destroy()
-        hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-        workspace.CurrentCamera.CameraSubject = hum
+        pcall(function()
+            bv:Destroy()
+            hum:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+            workspace.CurrentCamera.CameraSubject = hum
+            workspace.FallenPartsDestroyHeight = old_fpdh
+        end)
 
         if getgenv().DaDa_OldPos and hrp.Parent then
             local attempts = 0
@@ -1970,7 +1978,6 @@ local function initFlingMini()
                 task.wait()
             until attempts > 30 or (hrp.Position - getgenv().DaDa_OldPos.Position).Magnitude < 25
 
-            pcall(function() workspace.FallenPartsDestroyHeight = getgenv().DaDa_FPDH end)
             if notify then notify("Fling", "Возврат на позицию") end
         end
 
@@ -1984,16 +1991,22 @@ local function initFlingMini()
         if fling_thread then return end
         fling_thread = task.spawn(function()
             while ST.fling_mini.on do
-                if not ST.fling_active then
-                    local target = findTarget()
-                    if target then
-                        mini_fling(target)
-                        task.wait(ST.fling_mini.delay or 0.15)
+                local ok, err = pcall(function()
+                    if not ST.fling_active then
+                        local target = findTarget()
+                        if target then
+                            mini_fling(target)
+                            task.wait(ST.fling_mini.delay or 0.15)
+                        else
+                            task.wait(0.3)
+                        end
                     else
-                        task.wait(0.3)
+                        task.wait(0.1)
                     end
-                else
-                    task.wait(0.1)
+                end)
+                if not ok then
+                    warn("[Fling Loop] Error:", err)
+                    break
                 end
                 task.wait()
             end
@@ -2024,7 +2037,19 @@ local function initFlingMini()
 
     -- === API ===
     SHF.fling_mini = {
-        set_on       = function(v) ST.fling_mini.on = v; if v then start_loop() end end,
+        set_on = function(v)
+            ST.fling_mini.on = v == true
+            if not v then
+                ST.fling_active = false
+                getgenv().DaDa_OldPos = nil
+                pcall(function()
+                    if getgenv().DaDa_FPDH then
+                        workspace.FallenPartsDestroyHeight = getgenv().DaDa_FPDH
+                    end
+                end)
+            end
+            if v then start_loop() end
+        end,
         set_mode     = function(m) ST.fling_mini.mode = m end,
         set_target   = function(n) ST.fling_mini.target = n end,
         set_bypass   = function(v) ST.fling_mini.bypass_vel = v end,
