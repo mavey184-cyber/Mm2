@@ -3653,7 +3653,11 @@ local function initMenu()
     mB:Toggle("Auto Strafe",true,function(v) ST.bhop_strafe=v end)
     mB:Toggle("Gravity",false,function(v) ST.gravity=v end)
     mB:Slider("Gravity",196,0,500,function(v) ST.gravity_val=v end)
-
+    mB:Toggle("Double Jump",false,function(v)
+    if getgenv().DADA_DOUBLEJUMP_TOGGLE then
+        getgenv().DADA_DOUBLEJUMP_TOGGLE(v)
+    end
+end)
     -- VISUALS
     local vA=makePanel(4,"left","ESP")
     vA:Toggle("ESP",false,function(v) ST.esp_on=v; ST.quick_state.esp=v end,"esp")
@@ -3667,7 +3671,7 @@ local function initMenu()
     vB:Toggle("Chams",false,function(v) ST.esp_chams=v end)
     vB:Toggle("Flags",false,function(v) ST.esp_flags=v end)
     vB:Slider("Max Distance",1000,100,3000,function(v) ST.esp_max_dist=v end)
-
+    
     -- WORLD
     local wA=makePanel(5,"left","Visuals")
     wA:Toggle("Fullbright",false,function(v) ST.fullbright=v end)
@@ -3743,7 +3747,7 @@ local function initMenu()
     end)
     eA:Dropdown("Invis Mode",{"Ghost","Full"},"Ghost",function(v) SHF.invis_mode=v end)
 
-    -- INVIS V2 (shitaro, новая панель)
+    -- INVIS V2 (beta)
     eA:Toggle("Invis v2",false,function(v)
         if SHF.invis2Toggle then SHF.invis2Toggle(v) end
     end)
@@ -4977,6 +4981,10 @@ local function initConfigs()
     end)
 end
 initConfigs()
-
+mB:Toggle("Double Jump",false,function(v)
+    if getgenv().DADA_DOUBLEJUMP_TOGGLE then
+        getgenv().DADA_DOUBLEJUMP_TOGGLE(v)
+    end
+end)
 notify("DaDa v16 FIXED","здраствуй воин")
 print("[DaDa v16 FIXED] скрипт загружен")
