@@ -3578,8 +3578,39 @@ local function initNotifications()
         end
         return nil
     end
+    -- Stop the game's built-in firing sound only while custom Gunshot Sound is enabled.
+    -- Keep DaDaCustomSound instances untouched so the replacement sound can play.
+    local function silenceOriginalGunshot()
+        local function isOriginalGunshot(sound)
+            if not sound:IsA("Sound") or sound.Name:lower():find("dadacustomsound", 1, true) then
+                return false
+            end
+            local n = sound.Name:lower()
+            return n:find("gunshot", 1, true) ~= nil
+                or n:find("shoot", 1, true) ~= nil
+                or n:find("fire", 1, true) ~= nil
+                or n == "gun"
+        end
+        local char = LP.Character
+        local gun = char and char:FindFirstChild("Gun")
+        if gun then
+            for _, obj in ipairs(gun:GetDescendants()) do
+                if isOriginalGunshot(obj) then pcall(function() obj:Stop() end) end
+            end
+        end
+        if char then
+            for _, obj in ipairs(char:GetDescendants()) do
+                if isOriginalGunshot(obj) then pcall(function() obj:Stop() end) end
+            end
+        end
+        local soundService = game:GetService("SoundService")
+        for _, obj in ipairs(soundService:GetDescendants()) do
+            if isOriginalGunshot(obj) then pcall(function() obj:Stop() end) end
+        end
+    end
     local function on_shot_sh()
         if SHF.gunshot_sound then
+            silenceOriginalGunshot()
             snd_play(SHF.gunshot_sound_name, SHF.gunshot_sound_vol)
         end
         if not (SHF.kill_sound or SHF.sheriff_sound) then return end
@@ -4570,30 +4601,37 @@ local function initMenu()
         watchGunModelCharacter(character)
     end)
 
-    -- Gun Beam: create a shot trail only when the equipped gun fires.
-    -- Each trail is independent and is removed after 3.5 seconds.
+    -- Gun Beam: use the actual GunFired event, so aiming/mouse movement never draws a beam.
+    -- Each confirmed shot gets its own trail and is removed after 3.5 seconds.
     local beamEnabled=false
     local beamColor=Color3.fromRGB(190,90,255)
     local beamStyle="Neon"
     local shotHookConn
-    local toolAddedConn
     local activeShotBeams={}
     local function clearGunBeam()
         if shotHookConn then shotHookConn:Disconnect(); shotHookConn=nil end
-        if toolAddedConn then toolAddedConn:Disconnect(); toolAddedConn=nil end
         for i,obj in ipairs(activeShotBeams) do
-            if obj and obj.Parent then pcall(function() obj:Destroy() end) end
+            if obj then
+                if obj.startPart then pcall(function() obj.startPart:Destroy() end) end
+                if obj.endPart then pcall(function() obj.endPart:Destroy() end) end
+            end
             activeShotBeams[i]=nil
         end
     end
-    local function createShotBeam(tool)
-        if not beamEnabled or not tool or not tool.Parent or not LP.Character then return end
-        local handle=tool:FindFirstChild("Handle") or tool:FindFirstChildWhichIsA("BasePart",true)
-        local mouse=LP:GetMouse()
-        local hit=mouse and mouse.Hit
-        if not handle or not handle:IsA("BasePart") or not hit then return end
-        local target=hit.Position
-        local ok,beamPart=pcall(function()
+    local function createShotBeam(posA,posB)
+        if not beamEnabled or typeof(posA)~="Vector3" or typeof(posB)~="Vector3" then return end
+        local ok,shot=pcall(function()
+            local startPart=Instance.new("Part")
+            startPart.Name="DaDaGunBeamShotStart"
+            startPart.Anchored=true
+            startPart.CanCollide=false
+            startPart.CanTouch=false
+            startPart.CanQuery=false
+            startPart.Transparency=1
+            startPart.Size=Vector3.new(0.05,0.05,0.05)
+            startPart.Position=posA
+            startPart.Parent=workspace
+
             local endPart=Instance.new("Part")
             endPart.Name="DaDaGunBeamShotEnd"
             endPart.Anchored=true
@@ -4602,18 +4640,19 @@ local function initMenu()
             endPart.CanQuery=false
             endPart.Transparency=1
             endPart.Size=Vector3.new(0.05,0.05,0.05)
-            endPart.CFrame=CFrame.new(target)
+            endPart.Position=posB
             endPart.Parent=workspace
-            local endAttachment=Instance.new("Attachment")
-            endAttachment.Name="DaDaGunBeamShotEndAttachment"
-            endAttachment.Parent=endPart
-            local startAttachment=Instance.new("Attachment")
-            startAttachment.Name="DaDaGunBeamShotStartAttachment"
-            startAttachment.Parent=handle
+
+            local a0=Instance.new("Attachment")
+            a0.Name="DaDaGunBeamShotStartAttachment"
+            a0.Parent=startPart
+            local a1=Instance.new("Attachment")
+            a1.Name="DaDaGunBeamShotEndAttachment"
+            a1.Parent=endPart
             local beam=Instance.new("Beam")
             beam.Name="DaDaGunBeamShot"
-            beam.Attachment0=startAttachment
-            beam.Attachment1=endAttachment
+            beam.Attachment0=a0
+            beam.Attachment1=a1
             beam.Color=ColorSequence.new(beamColor)
             beam.Width0=0.08
             beam.Width1=0.025
@@ -4629,39 +4668,29 @@ local function initMenu()
                 beam.Width0=0.12; beam.Width1=0.04
                 beam.Texture="rbxasset://textures/particles/sparkles_main.dds"
             end
-            beam.Parent=endPart
-            return {part=endPart,start=startAttachment,beam=beam}
+            beam.Parent=startPart
+            return {startPart=startPart,endPart=endPart}
         end)
-        if not ok or not beamPart then return end
-        table.insert(activeShotBeams,beamPart)
+        if not ok or not shot then return end
+        table.insert(activeShotBeams,shot)
         task.delay(3.5,function()
             for i,obj in ipairs(activeShotBeams) do
-                if obj==beamPart then table.remove(activeShotBeams,i); break end
+                if obj==shot then table.remove(activeShotBeams,i); break end
             end
-            if beamPart.part then
-                if beamPart.start then pcall(function() beamPart.start:Destroy() end) end
-                pcall(function() beamPart.part:Destroy() end)
-            end
-        end)
-    end
-    local function hookGunShot(tool)
-        if shotHookConn then shotHookConn:Disconnect(); shotHookConn=nil end
-        if not beamEnabled or not tool or not tool:IsA("Tool") then return end
-        shotHookConn=tool.Activated:Connect(function()
-            -- Capture the aim point at the instant of the shot; cursor movement alone draws nothing.
-            createShotBeam(tool)
+            if shot.startPart then pcall(function() shot.startPart:Destroy() end) end
+            if shot.endPart then pcall(function() shot.endPart:Destroy() end) end
         end)
     end
     local function setupGunBeam()
         if shotHookConn then shotHookConn:Disconnect(); shotHookConn=nil end
-        if toolAddedConn then toolAddedConn:Disconnect(); toolAddedConn=nil end
         if not beamEnabled then return end
-        local character=LP.Character
-        if not character then return end
-        local tool=character:FindFirstChild("Gun") or character:FindFirstChildWhichIsA("Tool")
-        if tool then hookGunShot(tool) end
-        toolAddedConn=character.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") then task.defer(function() if beamEnabled and child.Parent==character then hookGunShot(child) end end) end
+        local ok,remote=pcall(function()
+            return ReplicatedStorage:WaitForChild("ClientServices"):WaitForChild("WeaponService"):WaitForChild("GunFired")
+        end)
+        if not ok or not remote then return end
+        shotHookConn=remote.OnClientEvent:Connect(function(gun,posA,posB)
+            if not beamEnabled then return end
+            createShotBeam(posA,posB)
         end)
     end
     vB:Toggle("Gun Beam",false,function(v)
@@ -4674,10 +4703,6 @@ local function initMenu()
     vB:Dropdown("Beam Color",{"Purple","Red","Blue","Green","White","Gold"},"Purple",function(v)
         local colors={Purple=Color3.fromRGB(190,90,255),Red=Color3.fromRGB(255,65,80),Blue=Color3.fromRGB(70,155,255),Green=Color3.fromRGB(80,255,140),White=Color3.fromRGB(245,245,255),Gold=Color3.fromRGB(255,190,65)}
         beamColor=colors[v] or colors.Purple
-    end)
-    LP.CharacterAdded:Connect(function()
-        task.wait(0.5)
-        if beamEnabled then setupGunBeam() end
     end)
 
     -- EXTRAS
