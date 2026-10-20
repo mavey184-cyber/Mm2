@@ -3848,23 +3848,96 @@ local function initMenu()
     end
     tabBtns[1].BackgroundTransparency=0.2; tabBtns[1].TextColor3=TEXT_MAIN
 
-    -- Halloween corner spiderweb decoration (visual only; no input capture).
-    local spiderWeb=Instance.new("TextLabel")
-    spiderWeb.Name="DaDaHalloweenSpiderWeb"
-    spiderWeb.AnchorPoint=Vector2.new(1,0)
-    spiderWeb.Position=UDim2.new(1,-5,0,2)
-    spiderWeb.Size=UDim2.fromOffset(82,72)
-    spiderWeb.BackgroundTransparency=1
-    spiderWeb.Text="╲╲╲╲╲\n╲╲╲╲╱\n╲╲╲╱╱╱\n╲╱╱╱╱╱"
-    spiderWeb.TextColor3=Color3.fromRGB(255,145,75)
-    spiderWeb.TextTransparency=0.08
-    spiderWeb.TextSize=15
-    spiderWeb.Font=Enum.Font.GothamBold
-    spiderWeb.TextXAlignment=Enum.TextXAlignment.Right
-    spiderWeb.TextYAlignment=Enum.TextYAlignment.Top
-    spiderWeb.ZIndex=20
-    spiderWeb.Active=false
-    spiderWeb.Parent=win
+    -- Halloween decor: clean corner web + small pumpkins (visual only).
+    local decorLayer=Instance.new("Frame")
+    decorLayer.Name="DaDaHalloweenDecor"
+    decorLayer.Size=UDim2.fromScale(1,1)
+    decorLayer.BackgroundTransparency=1
+    decorLayer.Active=false
+    decorLayer.Selectable=false
+    decorLayer.ZIndex=30
+    decorLayer.Parent=win
+
+    local function addWebCorner(anchorRight)
+        local web=Instance.new("Frame")
+        web.Name=anchorRight and "SpiderWebTopRight" or "SpiderWebTopLeft"
+        web.Size=UDim2.fromOffset(62,62)
+        web.Position=anchorRight and UDim2.new(1,-2,0,2) or UDim2.new(0,2,0,2)
+        web.AnchorPoint=anchorRight and Vector2.new(1,0) or Vector2.new(0,0)
+        web.BackgroundTransparency=1
+        web.ZIndex=31
+        web.Parent=decorLayer
+        local color=Color3.fromRGB(205,116,75)
+        local function line(x1,y1,x2,y2,thickness,transparency)
+            local dx,dy=x2-x1,y2-y1
+            local length=math.sqrt(dx*dx+dy*dy)
+            local f=Instance.new("Frame")
+            f.Name="WebThread"
+            f.AnchorPoint=Vector2.new(0,0.5)
+            f.Position=UDim2.fromOffset(x1,y1)
+            f.Size=UDim2.fromOffset(length,thickness or 1)
+            f.Rotation=math.deg(math.atan2(dy,dx))
+            f.BackgroundColor3=color
+            f.BackgroundTransparency=transparency or 0.2
+            f.BorderSizePixel=0
+            f.ZIndex=31
+            f.Active=false
+            f.Parent=web
+        end
+        local ox=anchorRight and 62 or 0
+        local sx=anchorRight and -1 or 1
+        -- Three radial threads and curved-looking cross threads form a real web pattern.
+        line(ox,0,ox-sx*60,0,1,0.25)
+        line(ox,0,ox,60,1,0.25)
+        line(ox,0,ox-sx*58,58,1,0.25)
+        line(ox-sx*15,0,ox,15,1,0.3)
+        line(ox-sx*30,0,ox,30,1,0.3)
+        line(ox-sx*45,0,ox,45,1,0.3)
+        line(ox-sx*15,15,ox-sx*30,12,1,0.3)
+        line(ox-sx*30,12,ox-sx*45,25,1,0.3)
+        line(ox-sx*45,25,ox-sx*58,58,1,0.3)
+        line(ox-sx*15,30,ox-sx*30,27,1,0.3)
+        line(ox-sx*30,27,ox-sx*45,40,1,0.3)
+        line(ox-sx*15,45,ox-sx*30,42,1,0.3)
+    end
+    addWebCorner(true)
+
+    local function addPumpkin(name,position,size,textSize)
+        local pumpkin=Instance.new("TextLabel")
+        pumpkin.Name=name
+        pumpkin.AnchorPoint=Vector2.new(0.5,0.5)
+        pumpkin.Position=position
+        pumpkin.Size=UDim2.fromOffset(size,size)
+        pumpkin.BackgroundTransparency=1
+        pumpkin.Text="🎃"
+        pumpkin.TextSize=textSize
+        pumpkin.Font=Enum.Font.GothamBold
+        pumpkin.TextColor3=Color3.fromRGB(255,132,38)
+        pumpkin.TextStrokeColor3=Color3.fromRGB(55,20,18)
+        pumpkin.TextStrokeTransparency=0.15
+        pumpkin.ZIndex=32
+        pumpkin.Active=false
+        pumpkin.Selectable=false
+        pumpkin.Parent=decorLayer
+        return pumpkin
+    end
+    -- Keep decorations at the lower edges so they never cover tabs or controls.
+    addPumpkin("HalloweenPumpkinBottomLeft",UDim2.new(0,18,1,-18),30,25)
+    addPumpkin("HalloweenPumpkinBottomRight",UDim2.new(1,-18,1,-18),30,25)
+    addPumpkin("HalloweenPumpkinSmallBottomRight",UDim2.new(1,-43,1,-13),22,18)
+
+    local bat=Instance.new("TextLabel")
+    bat.Name="DaDaHalloweenBat"
+    bat.AnchorPoint=Vector2.new(0.5,0.5)
+    bat.Position=UDim2.new(0.5,0,0,15)
+    bat.Size=UDim2.fromOffset(26,20)
+    bat.BackgroundTransparency=1
+    bat.Text="🦇"
+    bat.TextSize=17
+    bat.ZIndex=32
+    bat.Active=false
+    bat.Selectable=false
+    bat.Parent=decorLayer
 
     local function getCols(tabIndex)
         local pg=tapPages[tabIndex]; local cols={}
