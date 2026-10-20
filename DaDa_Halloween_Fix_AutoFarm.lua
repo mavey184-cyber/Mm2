@@ -3902,6 +3902,137 @@ local function initMenu()
     end
     addWebCorner(true)
 
+    -- Soft horror vignette: subtle darkness at the corners, fading toward the center.
+    local function addCornerShade(name, position, anchor, rotation)
+        local shade=Instance.new("Frame")
+        shade.Name=name
+        shade.AnchorPoint=anchor
+        shade.Position=position
+        shade.Size=UDim2.new(0,150,0,112)
+        shade.BackgroundColor3=Color3.fromRGB(5,3,10)
+        shade.BackgroundTransparency=0.16
+        shade.BorderSizePixel=0
+        shade.ZIndex=30
+        shade.Active=false
+        shade.Selectable=false
+        shade.Parent=decorLayer
+        local gradient=Instance.new("UIGradient")
+        gradient.Rotation=rotation
+        gradient.Transparency=NumberSequence.new({
+            NumberSequenceKeypoint.new(0,0.02),
+            NumberSequenceKeypoint.new(0.48,0.45),
+            NumberSequenceKeypoint.new(1,1)
+        })
+        gradient.Parent=shade
+        return shade
+    end
+    addCornerShade("HalloweenShadeTopLeft",UDim2.new(0,0,0,0),Vector2.new(0,0),45)
+    addCornerShade("HalloweenShadeTopRight",UDim2.new(1,0,0,0),Vector2.new(1,0),135)
+    addCornerShade("HalloweenShadeBottomLeft",UDim2.new(0,0,1,0),Vector2.new(0,1),-45)
+    addCornerShade("HalloweenShadeBottomRight",UDim2.new(1,0,1,0),Vector2.new(1,1),-135)
+
+    -- Hand-drawn skeletal figure tucked into the bottom-left edge.
+    -- Each bone is a slim rotated Frame, so it stays crisp at different UI scales.
+    local skeleton=Instance.new("Frame")
+    skeleton.Name="DaDaHalloweenCornerSkeleton"
+    skeleton.AnchorPoint=Vector2.new(0,1)
+    skeleton.Position=UDim2.new(0,5,1,-47)
+    skeleton.Size=UDim2.fromOffset(66,112)
+    skeleton.BackgroundTransparency=1
+    skeleton.ZIndex=33
+    skeleton.Active=false
+    skeleton.Selectable=false
+    skeleton.Parent=decorLayer
+    local boneColor=Color3.fromRGB(206,199,177)
+    local boneDark=Color3.fromRGB(49,43,48)
+    local function bone(name,x1,y1,x2,y2,thickness,color,z)
+        local dx,dy=x2-x1,y2-y1
+        local part=Instance.new("Frame")
+        part.Name=name
+        part.AnchorPoint=Vector2.new(0,0.5)
+        part.Position=UDim2.fromOffset(x1,y1)
+        part.Size=UDim2.fromOffset(math.sqrt(dx*dx+dy*dy),thickness)
+        part.Rotation=math.deg(math.atan2(dy,dx))
+        part.BackgroundColor3=color or boneColor
+        part.BorderSizePixel=0
+        part.ZIndex=z or 34
+        part.Active=false
+        part.Selectable=false
+        part.Parent=skeleton
+        local corner=Instance.new("UICorner")
+        corner.CornerRadius=UDim.new(1,0)
+        corner.Parent=part
+        return part
+    end
+    local skull=Instance.new("Frame")
+    skull.Name="Skull"
+    skull.Position=UDim2.fromOffset(21,2)
+    skull.Size=UDim2.fromOffset(25,26)
+    skull.BackgroundColor3=boneColor
+    skull.BorderSizePixel=0
+    skull.ZIndex=35
+    skull.Parent=skeleton
+    local skullCorner=Instance.new("UICorner")
+    skullCorner.CornerRadius=UDim.new(0.38,0)
+    skullCorner.Parent=skull
+    local function eye(name,x)
+        local e=Instance.new("Frame")
+        e.Name=name
+        e.Position=UDim2.fromOffset(x,9)
+        e.Size=UDim2.fromOffset(6,7)
+        e.BackgroundColor3=boneDark
+        e.BorderSizePixel=0
+        e.ZIndex=36
+        e.Parent=skull
+        local c=Instance.new("UICorner")
+        c.CornerRadius=UDim.new(1,0)
+        c.Parent=e
+    end
+    eye("LeftEyeSocket",4); eye("RightEyeSocket",15)
+    local nose=Instance.new("Frame")
+    nose.Name="NasalCavity"
+    nose.Position=UDim2.fromOffset(11,17)
+    nose.Size=UDim2.fromOffset(3,4)
+    nose.BackgroundColor3=boneDark
+    nose.BorderSizePixel=0
+    nose.ZIndex=36
+    nose.Parent=skull
+    bone("Neck",32,27,32,34,5)
+    -- Rib cage and spine.
+    bone("Spine",32,34,32,66,4)
+    for i=0,3 do
+        local y=37+i*6
+        bone("RibLeft"..i,32,y,21,y+2,2.5)
+        bone("RibRight"..i,32,y,43,y+2,2.5)
+    end
+    bone("Shoulders",20,35,44,35,4)
+    bone("LeftUpperArm",21,36,14,49,4)
+    bone("LeftForearm",14,49,18,60,3)
+    bone("RightUpperArm",43,36,51,48,4)
+    bone("RightForearm",51,48,46,59,3)
+    bone("Pelvis",25,68,39,68,5)
+    bone("LeftThigh",27,69,21,84,4)
+    bone("LeftShin",21,84,18,101,3.5)
+    bone("LeftFoot",18,101,25,103,3.5)
+    bone("RightThigh",37,69,43,83,4)
+    bone("RightShin",43,83,48,99,3.5)
+    bone("RightFoot",48,99,55,97,3.5)
+    -- Tiny joints give the silhouette a more skeletal, less stick-figure look.
+    for i,pt in ipairs({{32,35},{21,36},{43,36},{27,69},{37,69},{21,84},{43,83}}) do
+        local joint=Instance.new("Frame")
+        joint.Name="BoneJoint"..i
+        joint.AnchorPoint=Vector2.new(0.5,0.5)
+        joint.Position=UDim2.fromOffset(pt[1],pt[2])
+        joint.Size=UDim2.fromOffset(5,5)
+        joint.BackgroundColor3=boneColor
+        joint.BorderSizePixel=0
+        joint.ZIndex=35
+        joint.Parent=skeleton
+        local c=Instance.new("UICorner")
+        c.CornerRadius=UDim.new(1,0)
+        c.Parent=joint
+    end
+
     local function addPumpkin(name,position,size,textSize)
         local pumpkin=Instance.new("TextLabel")
         pumpkin.Name=name
