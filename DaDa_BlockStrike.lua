@@ -1,10 +1,4 @@
---[[
-  Original by SHITARO.LOL | renamed build: DaDa
-  ПАСТИТЕ ДАННУЮ ИИСЛОПНУЮ ХУЙНЮ
-  ЧЕ СЫНОК БЛЯДИ НАПАЛ НА МОЙ ХУЙ??? ПОЛУЧАЙ ОТВЕТКУ СЫНОК ПОТАСКУХИ😽😽😽
-]]
-
--- ===================== EXECUTOR DETECT (info only, no block) =====================
+чо ты тут делаешь далбаеб
 do
 	local function dada_detect_executor()
 		local name, ver = "Unknown", ""
